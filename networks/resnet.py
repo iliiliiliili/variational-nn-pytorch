@@ -92,7 +92,6 @@ def createResnet(Convolution, Linear):
                         kernel_size=1,
                         stride=stride,
                         bias=False,
-                        use_batch_norm=True,
                         **kwargs
                     ),
                 )
