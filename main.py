@@ -1,3 +1,4 @@
+from networks.vgg import createVGG
 from networks.variational import (
     VariationalBase,
     VariationalConvolution,
@@ -106,6 +107,45 @@ networks = {
     "resnet_dropout_152": createResnet(
         DropoutConvolution, DropoutLinear
     )['ResNet152'],
+
+    "vgg_vnn_11": createVGG(
+        VariationalConvolution, VariationalLinear
+    )["VGG11"],
+    "vgg_vnn_13": createVGG(
+        VariationalConvolution, VariationalLinear
+    )["VGG13"],
+    "vgg_vnn_16": createVGG(
+        VariationalConvolution, VariationalLinear
+    )["VGG16"],
+    "vgg_vnn_19": createVGG(
+        VariationalConvolution, VariationalLinear
+    )["VGG19"],
+
+    "vgg_classic_11": createVGG(
+        ClassicConvolution, ClassicLinear
+    )["VGG11"],
+    "vgg_classic_13": createVGG(
+        ClassicConvolution, ClassicLinear
+    )["VGG13"],
+    "vgg_classic_16": createVGG(
+        ClassicConvolution, ClassicLinear
+    )["VGG16"],
+    "vgg_classic_19": createVGG(
+        ClassicConvolution, ClassicLinear
+    )["VGG19"],
+
+    "vgg_dropout_11": createVGG(
+        DropoutConvolution, DropoutLinear
+    )["VGG11"],
+    "vgg_dropout_13": createVGG(
+        DropoutConvolution, DropoutLinear
+    )["VGG13"],
+    "vgg_dropout_16": createVGG(
+        DropoutConvolution, DropoutLinear
+    )["VGG16"],
+    "vgg_dropout_19": createVGG(
+        DropoutConvolution, DropoutLinear
+    )["VGG19"],
 }
 
 loss_functions = {
