@@ -92,7 +92,7 @@ class DropoutLinear(DropoutBase):
 
         super().__init__()
 
-        body = nn.Linear(in_features, out_features, **kwargs)
+        body = nn.Linear(in_features, out_features, bias=bias, **kwargs)
 
         droput = {
             "alpha": nn.AlphaDropout,

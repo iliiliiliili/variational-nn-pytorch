@@ -164,6 +164,9 @@ class VariationalConvolution(VariationalBase):
 
         super().__init__()
 
+        if use_batch_norm:
+            bias = False
+
         means = nn.Conv2d(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -229,8 +232,12 @@ class VariationalLinear(VariationalBase):
 
         super().__init__()
 
+        if use_batch_norm:
+            bias = False
+
         means = nn.Linear(
             in_features, out_features,
+            bias=bias,
             **kwargs
         )
 
@@ -239,6 +246,7 @@ class VariationalLinear(VariationalBase):
         else:
             stds = nn.Linear(
                 in_features, out_features,
+                bias=bias,
                 **kwargs
             )
 

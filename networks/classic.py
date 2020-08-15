@@ -60,6 +60,9 @@ class ClassicConvolution(ClassicBase):
 
         super().__init__()
 
+        if use_batch_norm:
+            bias = False
+
         body = nn.Conv2d(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -93,8 +96,12 @@ class ClassicLinear(ClassicBase):
 
         super().__init__()
 
+        if use_batch_norm:
+            bias = False
+
         body = nn.Linear(
             in_features, out_features,
+            bias=bias,
             **kwargs
         )
 
