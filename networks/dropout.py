@@ -109,3 +109,46 @@ class DropoutLinear(DropoutBase):
             dropout_probability=dropout_probability,
             dropout_inplace=dropout_inplace,
         )
+
+
+class DropoutConvolutionTranspose(DropoutBase):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        stride: Union[Tuple, int] = 1,
+        activation: Optional[nn.Module] = None,
+        dropout_probability: float = 0.5,
+        dropout_inplace: bool = False,
+        dropout_type: Literal[
+            "alpha", "feature_alpha", "standart"
+        ] = "standart",
+        bias=True,
+        **kwargs,
+    ) -> None:
+
+        super().__init__()
+
+        body = nn.ConvTranspose2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            bias=bias,
+            **kwargs,
+        )
+
+        droput = {
+            "alpha": nn.AlphaDropout,
+            "standart": nn.Dropout,
+            "feature_alpha": nn.FeatureAlphaDropout
+        }[dropout_type]
+
+        super().build(
+            body,
+            droput,
+            activation=activation,
+            dropout_probability=dropout_probability,
+            dropout_inplace=dropout_inplace,
+        )

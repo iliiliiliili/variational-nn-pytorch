@@ -114,3 +114,40 @@ class ClassicLinear(ClassicBase):
             batch_norm_eps=batch_norm_eps,
             batch_norm_momentum=batch_norm_momentum,
         )
+
+
+class ClassicConvolutionTranspose(ClassicBase):
+
+    def __init__(
+        self, in_channels: int, out_channels: int,
+        kernel_size: int, stride: Union[Tuple, int] = 1,
+        activation: Optional[nn.Module] = None,
+        use_batch_norm: bool = False,
+        batch_norm_eps: float = 1e-3,
+        batch_norm_momentum: float = 0.01,
+        bias=True,
+        **kwargs,
+    ) -> None:
+
+        super().__init__()
+
+        if use_batch_norm:
+            bias = False
+
+        body = nn.ConvTranspose2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            bias=bias,
+            **kwargs
+        )
+        super().build(
+            body,
+            nn.BatchNorm2d,
+            out_channels,
+            activation=activation,
+            use_batch_norm=use_batch_norm,
+            batch_norm_eps=batch_norm_eps,
+            batch_norm_momentum=batch_norm_momentum,
+        )

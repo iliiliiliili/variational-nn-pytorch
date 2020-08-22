@@ -262,3 +262,72 @@ class VariationalLinear(VariationalBase):
             batch_norm_momentum=batch_norm_momentum,
             global_std_mode=global_std_mode,
         )
+
+
+class VariationalConvolutionTranspose(VariationalBase):
+
+    def __init__(
+        self, in_channels: int, out_channels: int,
+        kernel_size: int, stride: Union[Tuple, int] = 1,
+        activation: Optional[Union[nn.Module, List[nn.Module]]] = None,
+        activation_mode: Union[
+            Literal['mean'], Literal['std'],
+            Literal['mean+std'], Literal['end'],
+            Literal['mean+end'], Literal['std+end'],
+            Literal['mean+std+end']
+        ] = 'mean',
+        use_batch_norm: bool = False,
+        batch_norm_mode: Union[
+            Literal['mean'], Literal['std'],
+            Literal['mean+std'], Literal['end'],
+            Literal['mean+end'], Literal['std+end'],
+            Literal['mean+std+end']
+        ] = 'end',
+        batch_norm_eps: float = 1e-3,
+        batch_norm_momentum: float = 0.01,
+        global_std_mode: Union[
+            Literal['none'], Literal['replace'],
+            Literal['multiply']
+        ] = 'none',
+        bias=True,
+        **kwargs,
+    ) -> None:
+
+        super().__init__()
+
+        if use_batch_norm:
+            bias = False
+
+        means = nn.ConvTranspose2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            bias=bias,
+            **kwargs
+        )
+
+        if global_std_mode == 'replace':
+            stds = None
+        else:
+            stds = nn.ConvTranspose2d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                stride=stride,
+                bias=bias,
+                **kwargs
+            )
+
+        super().build(
+            means, stds,
+            nn.BatchNorm2d,
+            out_channels,
+            activation=activation,
+            activation_mode=activation_mode,
+            use_batch_norm=use_batch_norm,
+            batch_norm_mode=batch_norm_mode,
+            batch_norm_eps=batch_norm_eps,
+            batch_norm_momentum=batch_norm_momentum,
+            global_std_mode=global_std_mode,
+        )
