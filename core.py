@@ -39,6 +39,16 @@ def give(dict: dict, names: List[str]):
     return given, left
 
 
+def filter_out_dict(dict: dict, names: List[str]):
+    left = {}
+
+    for key, val in dict.items():
+        if key not in names:
+            left[key] = val
+
+    return left
+
+
 def map_dict(
     dict: Dict[T1, T2],
     func: Union[Callable[[T2], T3], Callable[[T2, T1], T3]]

@@ -1,3 +1,4 @@
+from networks.mnist_auto_encoder_base import createMnistAutoEncoderBase
 from networks.vgg import createVGG
 from networks.variational import (
     VariationalConvolution,
@@ -16,6 +17,14 @@ dataset_params = {
     "mnist": {
         "mean": (0.1307,),
         "std": (0.3081,),
+        "dataset": datasets.MNIST,
+        "path": "./datasets/",
+        "train_size": 50000,
+        "validation_size": 10000,
+    },
+    "mnist_0_1": {
+        "mean": (0,),
+        "std": (1,),
         "dataset": datasets.MNIST,
         "path": "./datasets/",
         "train_size": 50000,
@@ -41,6 +50,9 @@ networks = {
     ),
     "mnist_base_dropout": createMnistBase(
         DropoutConvolution, DropoutLinear
+    ),
+    "mnist_auto_encoder_base_vnn": createMnistAutoEncoderBase(
+        VariationalConvolution, VariationalLinear
     ),
 
     "cifar10_base_vnn": createCifar10Base(
