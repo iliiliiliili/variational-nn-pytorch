@@ -161,3 +161,13 @@ activation_params = {
     "tanh": [],
     "leacky_relu": ["negative_slope", "inplace"],
 }
+
+optimizers = {
+
+    'SGD': torch.optim.SGD,
+}
+
+optimizer_params = {
+
+    'SGD': ['lr', 'momentum', 'dampening', 'weight_decay', 'nesterov'],
+}

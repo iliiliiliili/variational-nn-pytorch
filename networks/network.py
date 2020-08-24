@@ -11,14 +11,12 @@ class Network(nn.Module):
 
     def prepare_train(
         self,
-        learning_rate=0.0001,
-        momentum=0.9,
+        optimizer,
+        optimizer_params,
         loss_func=nn.CrossEntropyLoss()
     ):
-        self.optimizer = torch.optim.SGD(
-            self.parameters(), lr=learning_rate, momentum=momentum
-        )
 
+        self.optimizer = optimizer(self.parameters(), **optimizer_params)
         self.loss_func = loss_func
 
     def train_step(

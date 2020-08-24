@@ -1,6 +1,4 @@
-from networks.variational import (
-    VariationalBase,
-)
+from networks.variational import VariationalBase
 from typing import Optional
 from core import give, rename_dict
 import torch
@@ -16,6 +14,8 @@ from params import (
     loss_functions,
     activations,
     activation_params,
+    optimizer_params,
+    optimizers,
 )
 
 
@@ -147,6 +147,61 @@ def evaluate(
         f.write(str(result) + "\n")
 
 
+def process_activation_kwargs(kwargs):
+
+    current_activations = kwargs["activation"].split(" ")
+    activation_functions = []
+
+    for i, activation in enumerate(current_activations):
+
+        activation_kwargs, kwargs = give(
+            kwargs,
+            list(
+                map(
+                    lambda a: activation + "_" + a,
+                    activation_params[activation],
+                )
+            ),
+        )
+
+        if activation in current_activations[i + 1 :]:
+            kwargs = {**kwargs, **activation_kwargs}
+
+        func = activations[activation](
+            **rename_dict(
+                activation_kwargs,
+                lambda name: name.replace(activation + "_", ""),
+            )
+        )
+
+        activation_functions.append(func)
+
+    if len(activation_functions) == 1:
+        activation_functions = activation_functions[0]
+
+    kwargs["activation"] = activation_functions
+
+    return kwargs
+
+
+def process_optimizer_kwargs(optimizer_name, kwargs):
+
+    optimizer_kwargs, kwargs = give(
+        kwargs,
+        list(
+            map(lambda a: "optimizer_" + a, optimizer_params[optimizer_name],)
+        ),
+    )
+
+    current_optimizer_params = rename_dict(
+        optimizer_kwargs, lambda name: name.replace("optimizer_", ""),
+    )
+
+    current_optimizer_params
+
+    return kwargs, current_optimizer_params
+
+
 def train(
     network_name,
     dataset_name,
@@ -156,8 +211,7 @@ def train(
     model_suffix="",
     save_steps=-1,
     validation_steps=-1,
-    learning_rate=0.0001,
-    momentum=0.9,
+    optimizer=None,
     loss_function_name="cross_entropy",
     device="cuda:0",
     save_best=True,
@@ -167,38 +221,16 @@ def train(
 ):
 
     if "activation" in kwargs:
+        kwargs = process_activation_kwargs(kwargs)
 
-        current_activations = kwargs["activation"].split(" ")
-        activation_functions = []
+    if optimizer is None:
+        optimizer = "SGD"
+        kwargs["optimizer_lr"] = 0.001
+        kwargs["optimizer_momentum"] = 0.9
 
-        for i, activation in enumerate(current_activations):
-
-            activation_kwargs, kwargs = give(
-                kwargs,
-                list(
-                    map(
-                        lambda a: activation + "_" + a,
-                        activation_params[activation],
-                    )
-                ),
-            )
-
-            if activation in current_activations[i + 1:]:
-                kwargs = {**kwargs, **activation_kwargs}
-
-            func = activations[activation](
-                **rename_dict(
-                    activation_kwargs,
-                    lambda name: name.replace(activation + "_", ""),
-                )
-            )
-
-            activation_functions.append(func)
-
-        if len(activation_functions) == 1:
-            activation_functions = activation_functions[0]
-
-        kwargs["activation"] = activation_functions
+    kwargs, current_optimizer_params = process_optimizer_kwargs(
+        optimizer, kwargs
+    )
 
     if model_path is None:
 
@@ -210,6 +242,8 @@ def train(
         full_network_name += "" if model_suffix == "" else "_" + model_suffix
 
         model_path = "./models/" + full_network_name
+    else:
+        full_network_name = ""
 
     if not os.path.exists(model_path):
         os.mkdir(model_path)
@@ -239,8 +273,8 @@ def train(
         validation_steps = -validation_steps * len(train)
 
     net.prepare_train(
-        learning_rate=learning_rate,
-        momentum=momentum,
+        optimizer=optimizers[optimizer],
+        optimizer_params=current_optimizer_params,
         loss_func=loss_functions[loss_function_name],
     )
     net.to(device)
