@@ -144,6 +144,7 @@ networks = {
 loss_functions = {
     "cross_entropy": torch.nn.CrossEntropyLoss(),
     "mse": torch.nn.MSELoss(),
+    "bce": torch.nn.BCELoss(),
 }
 
 activations = {
