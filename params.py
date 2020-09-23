@@ -166,13 +166,11 @@ activation_params = {
 }
 
 optimizers = {
-
-    'SGD': torch.optim.SGD,
-    'Adam': torch.optim.Adam,
+    "SGD": torch.optim.SGD,
+    "Adam": torch.optim.Adam,
 }
 
 optimizer_params = {
-
-    'SGD': ['lr', 'momentum', 'dampening', 'weight_decay', 'nesterov'],
-    'Adam': ['lr', 'betas', 'eps', 'weight_decay', 'amsgrad'],
+    "SGD": ["lr", "momentum", "dampening", "weight_decay", "nesterov"],
+    "Adam": ["lr", "betas", "eps", "weight_decay", "amsgrad"],
 }
