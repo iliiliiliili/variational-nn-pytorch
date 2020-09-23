@@ -13,6 +13,10 @@ from networks.mnist_base import createMnistBase
 from networks.cifar10_base import createCifar10Base
 from networks.resnet import createResnet
 
+from networks import densenet_pure
+from networks import densenet1
+from networks import densenet2
+
 dataset_params = {
     "mnist": {
         "mean": (0.1307,),
@@ -45,16 +49,11 @@ networks = {
     "mnist_base_vnn": createMnistBase(
         VariationalConvolution, VariationalLinear
     ),
-    "mnist_base_classic": createMnistBase(
-        ClassicConvolution, ClassicLinear
-    ),
-    "mnist_base_dropout": createMnistBase(
-        DropoutConvolution, DropoutLinear
-    ),
+    "mnist_base_classic": createMnistBase(ClassicConvolution, ClassicLinear),
+    "mnist_base_dropout": createMnistBase(DropoutConvolution, DropoutLinear),
     "mnist_auto_encoder_base_vnn": createMnistAutoEncoderBase(
         VariationalConvolution, VariationalLinear
     ),
-
     "cifar10_base_vnn": createCifar10Base(
         VariationalConvolution, VariationalLinear
     ),
@@ -64,93 +63,84 @@ networks = {
     "cifar10_base_dropout": createCifar10Base(
         DropoutConvolution, DropoutLinear
     ),
-
-    "resnet_vnn_18": createResnet(
-        VariationalConvolution, VariationalLinear
-    )['ResNet18'],
-    "resnet_vnn_34": createResnet(
-        VariationalConvolution, VariationalLinear
-    )['ResNet34'],
-    "resnet_vnn_50": createResnet(
-        VariationalConvolution, VariationalLinear
-    )['ResNet50'],
-    "resnet_vnn_101": createResnet(
-        VariationalConvolution, VariationalLinear
-    )['ResNet101'],
-    "resnet_vnn_152": createResnet(
-        VariationalConvolution, VariationalLinear
-    )['ResNet152'],
-
-    "resnet_classic_18": createResnet(
+    "resnet_vnn_18": createResnet(VariationalConvolution, VariationalLinear)[
+        "ResNet18"
+    ],
+    "resnet_vnn_34": createResnet(VariationalConvolution, VariationalLinear)[
+        "ResNet34"
+    ],
+    "resnet_vnn_50": createResnet(VariationalConvolution, VariationalLinear)[
+        "ResNet50"
+    ],
+    "resnet_vnn_101": createResnet(VariationalConvolution, VariationalLinear)[
+        "ResNet101"
+    ],
+    "resnet_vnn_152": createResnet(VariationalConvolution, VariationalLinear)[
+        "ResNet152"
+    ],
+    "resnet_classic_18": createResnet(ClassicConvolution, ClassicLinear)[
+        "ResNet18"
+    ],
+    "resnet_classic_34": createResnet(ClassicConvolution, ClassicLinear)[
+        "ResNet34"
+    ],
+    "resnet_classic_50": createResnet(ClassicConvolution, ClassicLinear)[
+        "ResNet50"
+    ],
+    "resnet_classic_101": createResnet(ClassicConvolution, ClassicLinear)[
+        "ResNet101"
+    ],
+    "resnet_classic_152": createResnet(ClassicConvolution, ClassicLinear)[
+        "ResNet152"
+    ],
+    "resnet_dropout_18": createResnet(DropoutConvolution, DropoutLinear)[
+        "ResNet18"
+    ],
+    "resnet_dropout_34": createResnet(DropoutConvolution, DropoutLinear)[
+        "ResNet34"
+    ],
+    "resnet_dropout_50": createResnet(DropoutConvolution, DropoutLinear)[
+        "ResNet50"
+    ],
+    "resnet_dropout_101": createResnet(DropoutConvolution, DropoutLinear)[
+        "ResNet101"
+    ],
+    "resnet_dropout_152": createResnet(DropoutConvolution, DropoutLinear)[
+        "ResNet152"
+    ],
+    "vgg_vnn_11": createVGG(VariationalConvolution, VariationalLinear)[
+        "VGG11"
+    ],
+    "vgg_vnn_13": createVGG(VariationalConvolution, VariationalLinear)[
+        "VGG13"
+    ],
+    "vgg_vnn_16": createVGG(VariationalConvolution, VariationalLinear)[
+        "VGG16"
+    ],
+    "vgg_vnn_19": createVGG(VariationalConvolution, VariationalLinear)[
+        "VGG19"
+    ],
+    "vgg_classic_11": createVGG(ClassicConvolution, ClassicLinear)["VGG11"],
+    "vgg_classic_13": createVGG(ClassicConvolution, ClassicLinear)["VGG13"],
+    "vgg_classic_16": createVGG(ClassicConvolution, ClassicLinear)["VGG16"],
+    "vgg_classic_19": createVGG(ClassicConvolution, ClassicLinear)["VGG19"],
+    "vgg_dropout_11": createVGG(DropoutConvolution, DropoutLinear)["VGG11"],
+    "vgg_dropout_13": createVGG(DropoutConvolution, DropoutLinear)["VGG13"],
+    "vgg_dropout_16": createVGG(DropoutConvolution, DropoutLinear)["VGG16"],
+    "vgg_dropout_19": createVGG(DropoutConvolution, DropoutLinear)["VGG19"],
+    "densenet_pure": densenet_pure.DenseNet121,
+    "densenet1_classic": densenet1.createDenseNet(
         ClassicConvolution, ClassicLinear
-    )['ResNet18'],
-    "resnet_classic_34": createResnet(
-        ClassicConvolution, ClassicLinear
-    )['ResNet34'],
-    "resnet_classic_50": createResnet(
-        ClassicConvolution, ClassicLinear
-    )['ResNet50'],
-    "resnet_classic_101": createResnet(
-        ClassicConvolution, ClassicLinear
-    )['ResNet101'],
-    "resnet_classic_152": createResnet(
-        ClassicConvolution, ClassicLinear
-    )['ResNet152'],
-
-    "resnet_dropout_18": createResnet(
-        DropoutConvolution, DropoutLinear
-    )['ResNet18'],
-    "resnet_dropout_34": createResnet(
-        DropoutConvolution, DropoutLinear
-    )['ResNet34'],
-    "resnet_dropout_50": createResnet(
-        DropoutConvolution, DropoutLinear
-    )['ResNet50'],
-    "resnet_dropout_101": createResnet(
-        DropoutConvolution, DropoutLinear
-    )['ResNet101'],
-    "resnet_dropout_152": createResnet(
-        DropoutConvolution, DropoutLinear
-    )['ResNet152'],
-
-    "vgg_vnn_11": createVGG(
+    ),
+    "densenet1_vnn": densenet1.createDenseNet(
         VariationalConvolution, VariationalLinear
-    )["VGG11"],
-    "vgg_vnn_13": createVGG(
+    ),
+    "densenet2_classic": densenet2.createDenseNet2(
+        ClassicConvolution, ClassicLinear
+    ),
+    "densenet2_vnn": densenet2.createDenseNet2(
         VariationalConvolution, VariationalLinear
-    )["VGG13"],
-    "vgg_vnn_16": createVGG(
-        VariationalConvolution, VariationalLinear
-    )["VGG16"],
-    "vgg_vnn_19": createVGG(
-        VariationalConvolution, VariationalLinear
-    )["VGG19"],
-
-    "vgg_classic_11": createVGG(
-        ClassicConvolution, ClassicLinear
-    )["VGG11"],
-    "vgg_classic_13": createVGG(
-        ClassicConvolution, ClassicLinear
-    )["VGG13"],
-    "vgg_classic_16": createVGG(
-        ClassicConvolution, ClassicLinear
-    )["VGG16"],
-    "vgg_classic_19": createVGG(
-        ClassicConvolution, ClassicLinear
-    )["VGG19"],
-
-    "vgg_dropout_11": createVGG(
-        DropoutConvolution, DropoutLinear
-    )["VGG11"],
-    "vgg_dropout_13": createVGG(
-        DropoutConvolution, DropoutLinear
-    )["VGG13"],
-    "vgg_dropout_16": createVGG(
-        DropoutConvolution, DropoutLinear
-    )["VGG16"],
-    "vgg_dropout_19": createVGG(
-        DropoutConvolution, DropoutLinear
-    )["VGG19"],
+    ),
 }
 
 loss_functions = {
