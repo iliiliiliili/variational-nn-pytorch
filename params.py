@@ -42,6 +42,14 @@ dataset_params = {
         "train_size": 40000,
         "validation_size": 10000,
     },
+    "cifar10_n": {
+        "mean": [x / 255 for x in [125.3, 123.0, 113.9]],
+        "std": [x / 255 for x in [63.0, 62.1, 66.7]],
+        "dataset": datasets.CIFAR10,
+        "path": "./datasets/",
+        "train_size": 40000,
+        "validation_size": 10000,
+    }
 }
 
 
