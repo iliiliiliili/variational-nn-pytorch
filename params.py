@@ -18,6 +18,9 @@ from networks import densenet_pure
 from networks import densenet1
 from networks import densenet2
 
+from networks import resnet_pure
+
+
 dataset_params = {
     "mnist": {
         "dataset": datasets.MNIST,
@@ -202,6 +205,8 @@ networks = {
     "densenet2_vnn": densenet2.createDenseNet2(
         VariationalConvolution, VariationalLinear
     ),
+
+    "resnet_pure_50": resnet_pure.Resnet50
 }
 
 loss_functions = {
