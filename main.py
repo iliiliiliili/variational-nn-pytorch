@@ -23,28 +23,29 @@ def create_train_validation_test(dataset_name: str):
 
     params = dataset_params[dataset_name]
 
+    transform_train = (
+        params["transform"]["train"]
+        if "train" in params["transform"]
+        else params["transform"]["all"]
+    )
+    transform_test = (
+        params["transform"]["test"]
+        if "test" in params["transform"]
+        else params["transform"]["all"]
+    )
+
     train_val = params["dataset"](
         params["path"],
         train=True,
         download=True,
-        transform=transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize(params["mean"], params["std"]),
-            ]
-        ),
+        transform=transform_train,
     )
 
     test = params["dataset"](
         params["path"],
         train=False,
         download=True,
-        transform=transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize(params["mean"], params["std"]),
-            ]
-        ),
+        transform=transform_test,
     )
 
     train, val = torch.utils.data.random_split(  # type: ignore

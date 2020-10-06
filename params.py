@@ -8,6 +8,7 @@ from networks.classic import ClassicConvolution, ClassicLinear
 from networks.dropout import DropoutConvolution, DropoutLinear
 import torch
 from torchvision import datasets
+from torchvision import transforms
 
 from networks.mnist_base import createMnistBase
 from networks.cifar10_base import createCifar10Base
@@ -19,37 +20,89 @@ from networks import densenet2
 
 dataset_params = {
     "mnist": {
-        "mean": (0.1307,),
-        "std": (0.3081,),
         "dataset": datasets.MNIST,
         "path": "./datasets/",
         "train_size": 50000,
         "validation_size": 10000,
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.1307,), (0.3081,)),
+                ]
+            )
+        },
     },
     "mnist_0_1": {
-        "mean": (0,),
-        "std": (1,),
         "dataset": datasets.MNIST,
         "path": "./datasets/",
         "train_size": 50000,
         "validation_size": 10000,
+        "transform": {
+            "all": transforms.Compose(
+                [transforms.ToTensor(), transforms.Normalize((0,), (1,)),]
+            )
+        },
     },
     "cifar10": {
-        "mean": (0.5, 0.5, 0.5),
-        "std": (0.5, 0.5, 0.5),
         "dataset": datasets.CIFAR10,
         "path": "./datasets/",
         "train_size": 40000,
         "validation_size": 10000,
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ]
+            )
+        },
     },
     "cifar10_n": {
-        "mean": [x / 255 for x in [125.3, 123.0, 113.9]],
-        "std": [x / 255 for x in [63.0, 62.1, 66.7]],
         "dataset": datasets.CIFAR10,
         "path": "./datasets/",
         "train_size": 40000,
         "validation_size": 10000,
-    }
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        [x / 255 for x in [125.3, 123.0, 113.9]],
+                        [x / 255 for x in [63.0, 62.1, 66.7]],
+                    ),
+                ]
+            )
+        },
+    },
+    "cifar10_n2": {
+        "dataset": datasets.CIFAR10,
+        "path": "./datasets/",
+        "train_size": 40000,
+        "validation_size": 10000,
+        "transform": {
+            "train": transforms.Compose(
+                [
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomCrop(32, padding=4),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        [x / 255 for x in [125.3, 123.0, 113.9]],
+                        [x / 255 for x in [63.0, 62.1, 66.7]],
+                    ),
+                ]
+            ),
+            "test": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        [x / 255 for x in [125.3, 123.0, 113.9]],
+                        [x / 255 for x in [63.0, 62.1, 66.7]],
+                    ),
+                ]
+            ),
+        },
+    },
 }
 
 
