@@ -4,3 +4,4 @@ datasets
 .vscode
 __pycache__
 scripts/*
+tools/tex-reports
