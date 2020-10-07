@@ -19,7 +19,7 @@ from networks import densenet1
 from networks import densenet2
 
 from networks import resnet_pure
-
+from networks import vgg_pure
 
 dataset_params = {
     "mnist": {
@@ -206,7 +206,8 @@ networks = {
         VariationalConvolution, VariationalLinear
     ),
 
-    "resnet_pure_50": resnet_pure.Resnet50
+    "resnet_pure_50": resnet_pure.Resnet50,
+    "vgg_pure_16": vgg_pure.Vgg16,
 }
 
 loss_functions = {
