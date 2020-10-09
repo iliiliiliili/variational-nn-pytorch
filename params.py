@@ -254,6 +254,7 @@ networks = {
     ),
     "resnet_pure_50": resnet_pure.Resnet50,
     "vgg_pure_16": vgg_pure.Vgg16,
+    "vgg_pure_19": vgg_pure.Vgg19,
 }
 
 loss_functions = {
