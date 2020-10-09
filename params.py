@@ -1,3 +1,4 @@
+from networks.cifar10_mini_base import createCifar10MiniBase
 from networks.mnist_mlp import createMnistMlp
 from networks.mnist_double_linear import createMnistDoubleLinear
 from networks.mnist_mini2_base import createMnistMini2Base
@@ -146,15 +147,9 @@ networks = {
     "mnist_double_linear_dropout": createMnistDoubleLinear(
         DropoutConvolution, DropoutLinear
     ),
-    "mnist_mlp_vnn": createMnistMlp(
-        VariationalConvolution, VariationalLinear
-    ),
-    "mnist_mlp_classic": createMnistMlp(
-        ClassicConvolution, ClassicLinear
-    ),
-    "mnist_mlp_dropout": createMnistMlp(
-        DropoutConvolution, DropoutLinear
-    ),
+    "mnist_mlp_vnn": createMnistMlp(VariationalConvolution, VariationalLinear),
+    "mnist_mlp_classic": createMnistMlp(ClassicConvolution, ClassicLinear),
+    "mnist_mlp_dropout": createMnistMlp(DropoutConvolution, DropoutLinear),
     "mnist_auto_encoder_base_vnn": createMnistAutoEncoderBase(
         VariationalConvolution, VariationalLinear
     ),
@@ -165,6 +160,15 @@ networks = {
         ClassicConvolution, ClassicLinear
     ),
     "cifar10_base_dropout": createCifar10Base(
+        DropoutConvolution, DropoutLinear
+    ),
+    "cifar10_mini_base_vnn": createCifar10MiniBase(
+        VariationalConvolution, VariationalLinear
+    ),
+    "cifar10_mini_base_classic": createCifar10MiniBase(
+        ClassicConvolution, ClassicLinear
+    ),
+    "cifar10_mini_base_dropout": createCifar10MiniBase(
         DropoutConvolution, DropoutLinear
     ),
     "resnet_vnn_18": createResnet(VariationalConvolution, VariationalLinear)[
