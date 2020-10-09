@@ -19,6 +19,22 @@ with open(template_file, "r") as f:
     template = f.read()
 
 
+def get_model_group(model_name):
+
+    groups = [
+        'densenet',
+        'resnet',
+        'vgg',
+        'base',
+    ]
+
+    for g in groups:
+        if g in model_name:
+            return g
+
+    return model_name
+
+
 def parse_model_params(path):
     with open(path + "/params.json", "r") as f:
         params = json.load(f)
@@ -51,15 +67,20 @@ for path in model_folders:
                 ]
             )
 
-elements.sort(key=lambda x: (x[0], x[-1]), reverse=True)
+elements.sort(key=lambda x: (x[0], get_model_group(x[1]), x[-1]), reverse=True)
 
 table = [captions]
 
 last_dataset = None
+last_model = None
 for element in elements:
     if element[0] != last_dataset:
-        table.append("\\hline")
+        table.append("\\hline\\hline")
         last_dataset = element[0]
+        last_model = get_model_group(element[1])
+    elif get_model_group(element[1]) != last_model:
+        table.append("\\hline")
+        last_model = get_model_group(element[1])
 
     table.append(" & ".join(element) + " \\\\")
 
