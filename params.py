@@ -1,3 +1,4 @@
+from networks.mnist_double_linear import createMnistDoubleLinear
 from networks.mnist_mini2_base import createMnistMini2Base
 from networks.mnist_mini_base import createMnistMiniBase
 from networks.mnist_auto_encoder_base import createMnistAutoEncoderBase
