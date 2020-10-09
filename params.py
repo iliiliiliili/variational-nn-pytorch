@@ -269,6 +269,7 @@ activations = {
     "sigmoid": torch.nn.Sigmoid,
     "tanh": torch.nn.Tanh,
     "leacky_relu": torch.nn.LeakyReLU,
+    "noact": lambda **kwargs: None,
 }
 
 activation_params = {
@@ -277,6 +278,7 @@ activation_params = {
     "sigmoid": [],
     "tanh": [],
     "leacky_relu": ["negative_slope", "inplace"],
+    "noact": [],
 }
 
 optimizers = {
