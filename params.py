@@ -1,3 +1,5 @@
+from networks.mnist_mini2_base import createMnistMini2Base
+from networks.mnist_mini_base import createMnistMiniBase
 from networks.mnist_auto_encoder_base import createMnistAutoEncoderBase
 from networks.vgg import createVGG
 from networks.variational import (
@@ -115,6 +117,24 @@ networks = {
     ),
     "mnist_base_classic": createMnistBase(ClassicConvolution, ClassicLinear),
     "mnist_base_dropout": createMnistBase(DropoutConvolution, DropoutLinear),
+    "mnist_mini_base_vnn": createMnistMiniBase(
+        VariationalConvolution, VariationalLinear
+    ),
+    "mnist_mini_base_classic": createMnistMiniBase(
+        ClassicConvolution, ClassicLinear
+    ),
+    "mnist_mini_base_dropout": createMnistMiniBase(
+        DropoutConvolution, DropoutLinear
+    ),
+    "mnist_mini2_base_vnn": createMnistMini2Base(
+        VariationalConvolution, VariationalLinear
+    ),
+    "mnist_mini2_base_classic": createMnistMini2Base(
+        ClassicConvolution, ClassicLinear
+    ),
+    "mnist_mini2_base_dropout": createMnistMini2Base(
+        DropoutConvolution, DropoutLinear
+    ),
     "mnist_auto_encoder_base_vnn": createMnistAutoEncoderBase(
         VariationalConvolution, VariationalLinear
     ),
