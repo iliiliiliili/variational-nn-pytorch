@@ -249,6 +249,9 @@ networks = {
     "densenet2_vnn": densenet2.createDenseNet2(
         VariationalConvolution, VariationalLinear
     ),
+    "densenet2_dropout": densenet2.createDenseNet2(
+        DropoutConvolution, DropoutLinear
+    ),
     "resnet_pure_50": resnet_pure.Resnet50,
     "vgg_pure_16": vgg_pure.Vgg16,
 }
