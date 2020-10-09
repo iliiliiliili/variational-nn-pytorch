@@ -1,3 +1,4 @@
+from networks.mnist_mlp import createMnistMlp
 from networks.mnist_double_linear import createMnistDoubleLinear
 from networks.mnist_mini2_base import createMnistMini2Base
 from networks.mnist_mini_base import createMnistMiniBase
@@ -136,6 +137,24 @@ networks = {
     "mnist_mini2_base_dropout": createMnistMini2Base(
         DropoutConvolution, DropoutLinear
     ),
+    "mnist_double_linear_vnn": createMnistDoubleLinear(
+        VariationalConvolution, VariationalLinear
+    ),
+    "mnist_double_linear_classic": createMnistDoubleLinear(
+        ClassicConvolution, ClassicLinear
+    ),
+    "mnist_double_linear_dropout": createMnistDoubleLinear(
+        DropoutConvolution, DropoutLinear
+    ),
+    "mnist_mlp_vnn": createMnistMlp(
+        VariationalConvolution, VariationalLinear
+    ),
+    "mnist_mlp_classic": createMnistMlp(
+        ClassicConvolution, ClassicLinear
+    ),
+    "mnist_mlp_dropout": createMnistMlp(
+        DropoutConvolution, DropoutLinear
+    ),
     "mnist_auto_encoder_base_vnn": createMnistAutoEncoderBase(
         VariationalConvolution, VariationalLinear
     ),
@@ -226,7 +245,6 @@ networks = {
     "densenet2_vnn": densenet2.createDenseNet2(
         VariationalConvolution, VariationalLinear
     ),
-
     "resnet_pure_50": resnet_pure.Resnet50,
     "vgg_pure_16": vgg_pure.Vgg16,
 }
