@@ -8,8 +8,9 @@ from networks.auto_encoder_network import AutoEncoderNetwork
 import fire  # type:ignore
 import matplotlib.pyplot as plt
 from params import (
-    activation_params, activations, networks,
+    activation_params, activations, dataset_params, networks,
 )
+from torchvision import transforms
 
 
 def display_as_images(
@@ -54,7 +55,7 @@ def display_as_images(
     plt.close(fig)
 
 
-def run_evaluation(net: AutoEncoderNetwork, device, images_count=40):
+def run_evaluation(net: AutoEncoderNetwork, dataset, device, images_count=40):
 
     print()
 
@@ -63,22 +64,80 @@ def run_evaluation(net: AutoEncoderNetwork, device, images_count=40):
 
     images = []
 
-    for i in range(images_count):
+    if dataset is None:
 
-        image = net.generate(device=device)
+        for i in range(images_count):
 
-        images.append(image)
+            image = net.generate(device=device)
 
-        print(
-            "eval s["
-            + str(i + 1)
-            + "/"
-            + str(images_count)
-            + "]",
-            end="\r",
-        )
+            images.append(image)
+
+            print(
+                "eval s["
+                + str(i + 1)
+                + "/"
+                + str(images_count)
+                + "]",
+                end="\r",
+            )
+    else:
+        for i, (data, target) in enumerate(dataset):
+
+            data = data.to(device)
+
+            image = net.generate(net.encoder(data), device=device)
+
+            images.append(image)
+            images.append(data)
+
+            print(
+                "eval s["
+                + str(i + 1)
+                + "/"
+                + str(images_count)
+                + "]",
+                end="\r",
+            )
+
+            if i >= images_count:
+                break
 
     return images
+
+
+def create_train_validation_test(dataset_name: str):
+
+    params = dataset_params[dataset_name]
+
+    train_val = params["dataset"](
+        params["path"],
+        train=True,
+        download=True,
+        transform=transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(params["mean"], params["std"]),
+            ]
+        ),
+    )
+
+    test = params["dataset"](
+        params["path"],
+        train=False,
+        download=True,
+        transform=transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(params["mean"], params["std"]),
+            ]
+        ),
+    )
+
+    train, val = torch.utils.data.random_split(  # type: ignore
+        train_val, [params["train_size"], params["validation_size"]]
+    )
+
+    return train, val, test
 
 
 def generate(
@@ -87,6 +146,7 @@ def generate(
     model_path=None,
     model_suffix="",
     device="cuda:0",
+    split=None,
     image_shape=(28, 28),
     **kwargs,
 ):
@@ -139,7 +199,11 @@ def generate(
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     net: AutoEncoderNetwork = networks[network_name](**kwargs)
 
-    images = run_evaluation(net, device)
+    train, val, test = create_train_validation_test(dataset_name)
+
+    current_dataset = None if split is None else {"train": train, "validation": val, "test": test}[split]
+
+    images = run_evaluation(net, current_dataset, device)
     display_as_images(
         images,
         lambda img: img.view(image_shape).detach(),

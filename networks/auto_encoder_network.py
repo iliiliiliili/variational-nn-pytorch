@@ -2,7 +2,6 @@ from networks.network import Network
 from typing import Callable, List, Optional
 import torch
 from torch import nn
-import os
 
 
 class AutoEncoderNetwork(Network):
