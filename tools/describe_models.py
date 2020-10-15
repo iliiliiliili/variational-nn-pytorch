@@ -95,6 +95,12 @@ optimizers = [
 ]
 
 regularization_types = [
+    ["bn_bmdm", "BNMean"],
+    ["bn_bmds", "BNStd"],
+    ["bn_bmde", "BNEnd"],
+    ["bn_bmdms", "BNMeanStd"],
+    ["bn_bmdse", "BNStdEnd"],
+    ["bn_bmdmse", "BNMeanStdEnd"],
     ["bn", "BN"],
     ["dropout_alpha", "DoA"],
     ["dropout_feature_alpha", "DoFA"],
@@ -103,7 +109,61 @@ regularization_types = [
 
 vnn_types = [
     ["global", "VarGSTD"],
-    ["decaying", "VarDSTD"]
+    ["decaying", "VarDSTD"],
+    ["varp", "Var"],
+    ["varg", "VarGSTD"],
+    ["vard", "VarDSTD"],
+]
+
+complex_activations = [
+    ["noeact_amdm", "-", "-"],
+    ["relu_amdm", "Relu", "Mean"],
+    ["relu_amds", "Relu", "Std"],
+    ["relu_amde", "Relu", "End"],
+    ["relu_amdms", "Relu Relu", "Mean+Std"],
+    ["ars_amdms", "Relu Sigmoid", "Mean+Std"],
+    ["art_amdm", "Relu Tanh", "Mean+Std"],
+    ["arrr_amdmse", "Relu Relu Relu", "Mean+Std+End"],
+    ["arsr_amdmse", "Relu Sigmoid Relu", "Mean+Std+End"],
+    ["artr_amdmse", "Relu Tanh Relu", "Mean+Std+End"],
+    ["relu6_amdm", "Relu6", "Mean"],
+    ["relu6_amds", "Relu6", "Std"],
+    ["relu6_amde", "Relu6", "End"],
+    ["relu6_amdms", "Relu6 Relu6", "Mean+Std"],
+    ["ar6s_amdms", "Relu6 Sigmoid", "Mean+Std"],
+    ["ar6t_amdm", "Relu6 Tanh", "Mean+Std"],
+    ["ar6r6r6_amdmse", "Relu6 Relu6 Relu6", "Mean+Std+End"],
+    ["ar6sr6_amdmse", "Relu6 Sigmoid Relu6", "Mean+Std+End"],
+    ["ar6tr6_amdmse", "Relu6 Tanh Relu6", "Mean+Std+End"],
+    ["sigmoid_amdm", "Sigmoid", "Mean"],
+    ["sigmoid_amds", "Sigmoid", "Std"],
+    ["sigmoid_amde", "Sigmoid", "End"],
+    ["ass_amdms", "Sigmoid Sigmoid", "Mean+Std"],
+    ["ast_amdms", "Sigmoid Tanh", "Mean+Std"],
+    ["asss_amdmse", "Sigmoid Sigmoid Sigmoid", "Mean+Std+End"],
+    ["asts_amdmse", "Sigmoid Tanh Sigmoid", "Mean+Std+End"],
+    ["tanh_amdm", "Tanh", "Mean"],
+    ["tanh_amds", "Tanh", "Std"],
+    ["tanh_amde", "Tanh", "End"],
+    ["att_amdms", "Tanh Tanh", "Mean+Std"],
+    ["ats_amdms", "Tanh Sigmoid", "Mean+Std"],
+    ["attt_amdmse", "Tanh Tanh Tanh", "Mean+Std+End"],
+    ["atst_amdmse", "Tanh Sigmoid Tanh", "Mean+Std+End"],
+    ["leacky_relu_amdm", "LRelu", "Mean"],
+    ["leacky_relu_amds", "LRelu", "Std"],
+    ["leacky_relu_amde", "LRelu", "End"],
+    ["alrlr_amdms", "LRelu LRelu", "Mean+Std"],
+    ["alrs_amdms", "LRelu Sigmoid", "Mean+Std"],
+    ["alr_amdm", "LRelu Tanh", "Mean+Std"],
+    ["alrlrlr_amdmse", "LRelu LRelu LRelu", "Mean+Std+End",],
+    ["alrslr_amdmse", "LRelu Sigmoid LRelu", "Mean+Std+End"],
+    ["alrtlr_amdmse", "LRelu Tanh LRelu", "Mean+Std+End"],
+    ["arr_amdms", "Relu Relu", "Mean+Std"],
+    ["ar6r6_amdms", "Relu6 Relu6", "Mean+Std"],
+    ["ass_amdms", "Sigmoid Sigmoid", "Mean+Std"],
+    ["att_amdms", "Tanh Tanh", "Mean+Std"],
+    ["alrlr_amdms", "lrelu lrelu", "Mean+Std"],
+    ["noact", "-", "-"],
 ]
 
 for name in model_folders:
@@ -116,6 +176,7 @@ for name in model_folders:
     optimizer = "SGD"
     regularization_type = "-"
     nn_type = "Normal"
+    activation_mode = "Mean"
 
     for d in datasets:
         if d in name:
@@ -157,15 +218,22 @@ for name in model_folders:
             if v[0] in name:
                 nn_type = v[1]
 
-    model_name = model_name.replace('_classic', '')
-    model_name = model_name.replace('_dropout', '')
-    model_name = model_name.replace('_vnn', '')
+    model_name = model_name.replace("_classic", "")
+    model_name = model_name.replace("_dropout", "")
+    model_name = model_name.replace("_vnn", "")
+
+    for ca in complex_activations:
+        if ca[0] in model_name:
+            activation = ca[1]
+            activation_mode = ca[2]
+            break
 
     result = {
         "dataset": dataset,
         "model_name": model_name,
         "type": nn_type,
         "activation": activation,
+        "activation_mode": activation_mode,
         "optimizer": optimizer,
         "regularization_type": regularization_type,
     }

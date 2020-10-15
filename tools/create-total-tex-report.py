@@ -12,8 +12,8 @@ template_file = (
     "tools/tex-report-template-long.tex" if len(sys.argv) < 4 else sys.argv[3]
 )
 
-captions = "    Dataset & Model & Type & Activation & optimizer & BN/DO & Accuracy\\\\ [0.5ex] \n        \\hline"
-mode = "|c c c c c c c|"
+captions = "    Dataset & Model & Type & Activation & ActMode & optimizer & BN/DO & Accuracy\\\\ [0.5ex] \n        \\hline"
+mode = "|c c c c c c c c|"
 
 with open(template_file, "r") as f:
     template = f.read()
@@ -43,6 +43,7 @@ def parse_model_params(path):
             params["model_name"].replace('_', ' '),
             params["type"].replace('_', ' '),
             params["activation"].replace('_', ' '),
+            params["activation_mode"].replace('_', ' '),
             params["optimizer"].replace('_', ' '),
             params["regularization_type"].replace('_', ' '),
         ]
@@ -58,7 +59,11 @@ for path in model_folders:
         path + "/params.json"
     ):
         with open(path + "/best/description.json", "r") as f:
-            best = json.load(f)
+            try:
+                best = json.load(f)
+
+            except Exception:
+                continue
 
             elements.append(
                 [
