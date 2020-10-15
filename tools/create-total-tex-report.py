@@ -44,7 +44,7 @@ def parse_model_params(path):
             params["type"].replace('_', ' '),
             params["activation"].replace('_', ' '),
             params["optimizer"].replace('_', ' '),
-            params["batch_norm_dropout_type"].replace('_', ' '),
+            params["regularization_type"].replace('_', ' '),
         ]
 
         return result

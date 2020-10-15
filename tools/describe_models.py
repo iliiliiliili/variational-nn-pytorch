@@ -94,7 +94,7 @@ optimizers = [
     "Adam",
 ]
 
-batch_norm_dropout_types = [
+regularization_types = [
     ["bn", "BN"],
     ["dropout_alpha", "DoA"],
     ["dropout_feature_alpha", "DoFA"],
@@ -114,7 +114,7 @@ for name in model_folders:
     model_name = ""
     activation = ""
     optimizer = "SGD"
-    batch_norm_dropout_type = "-"
+    regularization_type = "-"
     nn_type = "Normal"
 
     for d in datasets:
@@ -141,14 +141,14 @@ for name in model_folders:
             name = name.replace(op, "")
             break
 
-    for b in batch_norm_dropout_types:
+    for b in regularization_types:
         if b[0] in name:
-            batch_norm_dropout_type = b[1]
+            regularization_type = b[1]
             name = name.replace(b[0], "")
             break
 
-    if (model_name in default_bn_models) and (batch_norm_dropout_type == "-"):
-        batch_norm_dropout_type = "BN"
+    if (model_name in default_bn_models) and (regularization_type == "-"):
+        regularization_type = "BN"
 
     if "vnn" in model_name:
         nn_type = "Var"
@@ -167,7 +167,7 @@ for name in model_folders:
         "type": nn_type,
         "activation": activation,
         "optimizer": optimizer,
-        "batch_norm_dropout_type": batch_norm_dropout_type,
+        "regularization_type": regularization_type,
     }
 
     print(result)
