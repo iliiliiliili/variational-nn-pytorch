@@ -35,17 +35,11 @@ def create_train_validation_test(dataset_name: str):
     )
 
     train_val = params["dataset"](
-        params["path"],
-        train=True,
-        download=True,
-        transform=transform_train,
+        params["path"], train=True, download=True, transform=transform_train,
     )
 
     test = params["dataset"](
-        params["path"],
-        train=False,
-        download=True,
-        transform=transform_test,
+        params["path"], train=False, download=True, transform=transform_test,
     )
 
     train, val = torch.utils.data.random_split(  # type: ignore
