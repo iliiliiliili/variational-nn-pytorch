@@ -1,3 +1,9 @@
+from networks.const_mean_variational import (
+    OneMeanVariationalConvolution,
+    OneMeanVariationalLinear,
+    ZeroMeanVariationalConvolution,
+    ZeroMeanVariationalLinear,
+)
 from networks.cifar10_mini_base import createCifar10MiniBase
 from networks.mnist_mlp import createMnistMlp
 from networks.mnist_double_linear import createMnistDoubleLinear
@@ -150,6 +156,12 @@ networks = {
     "mnist_mlp_vnn": createMnistMlp(VariationalConvolution, VariationalLinear),
     "mnist_mlp_classic": createMnistMlp(ClassicConvolution, ClassicLinear),
     "mnist_mlp_dropout": createMnistMlp(DropoutConvolution, DropoutLinear),
+    "mnist_base_0vnn": createMnistBase(
+        ZeroMeanVariationalConvolution, ZeroMeanVariationalLinear
+    ),
+    "mnist_base_1vnn": createMnistBase(
+        OneMeanVariationalConvolution, OneMeanVariationalLinear
+    ),
     "mnist_auto_encoder_base_vnn": createMnistAutoEncoderBase(
         VariationalConvolution, VariationalLinear
     ),
