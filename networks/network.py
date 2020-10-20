@@ -44,19 +44,25 @@ class Network(nn.Module):
             return loss.item(), correct_count(output, target)
 
     def eval_step(
-        self, input, target,
+        self,
+        input,
+        target,
         correct_count: Optional[
             Callable[[torch.Tensor, torch.Tensor], int]
         ] = None,
     ):
 
         output = self(input)
-        loss = self.loss_func(output, target)
+        loss = (
+            self.loss_func(output, target).item()
+            if hasattr(self, "loss_func")
+            else None
+        )
 
         if correct_count is None:
-            return loss.item()
+            return loss
         else:
-            return loss.item(), correct_count(output, target)
+            return loss, correct_count(output, target)
 
     def save(self, save_path):
 

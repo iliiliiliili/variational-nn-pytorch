@@ -112,8 +112,12 @@ def evaluate(
     model_suffix="",
     split="validation",
     device="cuda:0",
+    save=True,
     **kwargs,
 ):
+
+    if "activation" in kwargs:
+        kwargs = process_activation_kwargs(kwargs)
 
     if model_path is None:
 
@@ -130,14 +134,23 @@ def evaluate(
 
     net: Network = networks[network_name](**kwargs)
 
+    net.load(model_path, device)
+
     train, val, test = create_train_validation_test(dataset_name)
 
     current_dataset = {"train": train, "validation": val, "test": test}[split]
+    current_dataset = torch.utils.data.DataLoader(  # type: ignore
+        current_dataset, batch, shuffle=False, num_workers=4
+    )
 
     result = run_evaluation(net, current_dataset, device, correct_count, batch)
 
     print('Evaluation on "' + split + '" result: ' + str(result))
 
+    if not os.path.exists(model_path + "/results"):
+        os.mkdir(model_path)
+
+    if save:
     with open(model_path + "/results/eval_" + split + ".txt", "w") as f:
         f.write(str(result) + "\n")
 
