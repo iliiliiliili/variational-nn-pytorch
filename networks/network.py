@@ -63,5 +63,10 @@ class Network(nn.Module):
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 
-        torch.save(self.state_dict(), save_path + '/model.pth')
-        torch.save(self.optimizer.state_dict(), save_path + '/optimizer.pth')
+        torch.save(self.state_dict(), save_path + "/model.pth")
+        torch.save(self.optimizer.state_dict(), save_path + "/optimizer.pth")
+
+    def load(self, load_path, device=None):
+        self.load_state_dict(
+            torch.load(load_path + "/model.pth", map_location=device)
+        )
