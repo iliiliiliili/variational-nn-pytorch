@@ -70,20 +70,18 @@ def run_evaluation(net: Network, val, device, correct_count, batch):
     net.eval()
     VariationalBase.GLOBAL_STD = 0
 
-    total_correct = 0
-    total_elements = 0
+    accuracy_metric = AverageMetric()
 
     for i, (data, target) in enumerate(val):
 
         data = data.to(device)
         target = target.to(device)
 
-        loss, correct = net.eval_step(
+        loss, correct = net.eval_step(  # type: ignore
             data, target, correct_count=correct_count
         )
 
-        total_correct += correct
-        total_elements += batch
+        accuracy_metric.update(float(correct) / batch)
 
         print(
             "eval s["
@@ -94,14 +92,14 @@ def run_evaluation(net: Network, val, device, correct_count, batch):
             + " loss="
             + str(loss)
             + " acc="
-            + str(float(total_correct) / total_elements),
+            + str(accuracy_metric.get()),
             end="\r",
         )
 
     print()
 
     net.train()
-    return float(total_correct) / total_elements
+    return accuracy_metric.get()
 
 
 def evaluate(
@@ -296,8 +294,7 @@ def train(
 
         for epoch in range(epochs):
 
-            total_correct = 0
-            total_elements = 0
+            accuracy_metric = AverageMetric()
 
             for i, (data, target) in enumerate(train):
 
@@ -314,8 +311,7 @@ def train(
                     data, target, correct_count=correct_count
                 )
 
-                total_correct += correct
-                total_elements += batch
+                accuracy_metric.update(float(correct) / batch)
 
                 log = (
                     full_network_name
@@ -332,7 +328,7 @@ def train(
                     + " loss="
                     + str(loss)
                     + " acc="
-                    + str(float(total_correct) / total_elements)
+                    + str(accuracy_metric.get())
                 )
 
                 if start_global_std is not None:
