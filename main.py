@@ -102,6 +102,12 @@ def run_evaluation(net: Network, val, device, correct_count, batch):
     return accuracy_metric.get()
 
 
+def create_model_description(path, **kwargs):
+
+    with open(path + "/training_parameters.json", "w") as f:
+        json.dump(kwargs, f)
+
+
 def evaluate(
     network_name,
     dataset_name,
@@ -226,18 +232,6 @@ def train(
     **kwargs,
 ):
 
-    if "activation" in kwargs:
-        kwargs = process_activation_kwargs(kwargs)
-
-    if optimizer is None:
-        optimizer = "SGD"
-        kwargs["optimizer_lr"] = 0.001
-        kwargs["optimizer_momentum"] = 0.9
-
-    kwargs, current_optimizer_params = process_optimizer_kwargs(
-        optimizer, kwargs
-    )
-
     if model_path is None:
 
         full_network_name = network_name
@@ -257,6 +251,37 @@ def train(
         os.mkdir(model_path + "/results")
     if not os.path.exists(model_path + "/best"):
         os.mkdir(model_path + "/best")
+
+    if optimizer is None:
+        optimizer = "SGD"
+        kwargs["optimizer_lr"] = 0.001
+        kwargs["optimizer_momentum"] = 0.9
+
+    create_model_description(
+        model_path,
+        network_name=network_name,
+        dataset_name=dataset_name,
+        batch=batch,
+        epochs=epochs,
+        model_path=model_path,
+        model_suffix=model_suffix,
+        save_steps=save_steps,
+        validation_steps=validation_steps,
+        optimizer=optimizer,
+        loss_function_name=loss_function_name,
+        device=device,
+        save_best=save_best,
+        start_global_std=start_global_std,
+        end_global_std=end_global_std,
+        **kwargs,
+    )
+
+    if "activation" in kwargs:
+        kwargs = process_activation_kwargs(kwargs)
+
+    kwargs, current_optimizer_params = process_optimizer_kwargs(
+        optimizer, kwargs
+    )
 
     device = torch.device(device if torch.cuda.is_available() else "cpu")
 
