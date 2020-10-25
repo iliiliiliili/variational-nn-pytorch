@@ -41,6 +41,91 @@ from networks import densenet2
 from networks import resnet_pure
 from networks import vgg_pure
 
+
+SEED = 2605
+
+perturbed_dataset_params = {
+
+    "mnist": lambda noise: {
+        "dataset": datasets.MNIST,
+        "path": "./datasets/",
+        "train_size":           59000,
+        "validation_size": 1000,
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Lambda(noise),
+                    transforms.Normalize((0.1307,), (0.3081,)),
+                ]
+            )
+        },
+    },
+    "cifar10": lambda noise: {
+        "dataset": datasets.CIFAR10,
+        "path": "./datasets/",
+        "train_size": 40000,
+        "validation_size": 10000,
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Lambda(noise),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                ]
+            )
+        },
+    },
+    "cifar10_n": lambda noise: {
+        "dataset": datasets.CIFAR10,
+        "path": "./datasets/",
+        "train_size": 40000,
+        "validation_size": 10000,
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Lambda(noise),
+                    transforms.Normalize(
+                        [x / 255 for x in [125.3, 123.0, 113.9]],
+                        [x / 255 for x in [63.0, 62.1, 66.7]],
+                    ),
+                ]
+            )
+        },
+    },
+    "cifar10_n2": lambda noise: {
+        "dataset": datasets.CIFAR10,
+        "path": "./datasets/",
+        "train_size": 40000,
+        "validation_size": 10000,
+        "transform": {
+            "train": transforms.Compose(
+                [
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomCrop(32, padding=4),
+                    transforms.ToTensor(),
+                    transforms.Lambda(noise),
+                    transforms.Normalize(
+                        [x / 255 for x in [125.3, 123.0, 113.9]],
+                        [x / 255 for x in [63.0, 62.1, 66.7]],
+                    ),
+                ]
+            ),
+            "test": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Lambda(noise),
+                    transforms.Normalize(
+                        [x / 255 for x in [125.3, 123.0, 113.9]],
+                        [x / 255 for x in [63.0, 62.1, 66.7]],
+                    ),
+                ]
+            ),
+        },
+    },
+}
+
 dataset_params = {
     "mnist": {
         "dataset": datasets.MNIST,

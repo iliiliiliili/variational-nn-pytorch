@@ -1,8 +1,14 @@
+from perturbed_evaluation import (
+    evaluate_bar_occluded,
+    evaluate_gaussian,
+    evaluate_randomly_occluded, evaluate_randomly_swapped,
+    evaluate_uniform,
+)
+from metrics import AverageMetric
 from networks.variational import VariationalBase
 from typing import Optional
 from core import give, rename_dict
 import torch
-from torchvision import transforms
 from networks.network import Network
 import os
 import fire  # type:ignore
@@ -19,9 +25,7 @@ from params import (
 )
 
 
-def create_train_validation_test(dataset_name: str):
-
-    params = dataset_params[dataset_name]
+def create_train_validation_test(params):
 
     transform_train = (
         params["transform"]["train"]
@@ -117,6 +121,7 @@ def evaluate(
     split="validation",
     device="cuda:0",
     save=True,
+    evaluation_type="normal",
     **kwargs,
 ):
 
@@ -140,23 +145,86 @@ def evaluate(
 
     net.load(model_path, device)
 
-    train, val, test = create_train_validation_test(dataset_name)
+    result = None
 
-    current_dataset = {"train": train, "validation": val, "test": test}[split]
+    if evaluation_type == "normal":
+
+        train, val, test = create_train_validation_test(
+            dataset_params[dataset_name]
+        )
+
+        current_dataset = {"train": train, "validation": val, "test": test}[
+            split
+        ]
     current_dataset = torch.utils.data.DataLoader(  # type: ignore
         current_dataset, batch, shuffle=False, num_workers=4
     )
 
-    result = run_evaluation(net, current_dataset, device, correct_count, batch)
+        result = run_evaluation(
+            net, current_dataset, device, correct_count, batch
+        )
+    elif evaluation_type in [
+        "gaussian",
+        "uniform",
+        "bar_occluded",
+        "randomly_occluded",
+        "randomly_swapped",
+    ]:
 
-    print('Evaluation on "' + split + '" result: ' + str(result))
+        def evaluate_current(current_dataset_params):
+            train, val, test = create_train_validation_test(
+                current_dataset_params
+            )
+            current_dataset = {
+                "train": train,
+                "validation": val,
+                "test": test,
+            }[split]
+            current_dataset = torch.utils.data.DataLoader(  # type: ignore
+                current_dataset, batch, shuffle=False, num_workers=0
+            )
+
+            return run_evaluation(
+                net, current_dataset, device, correct_count, batch
+            )
+
+        result = {
+            "gaussian": evaluate_gaussian,
+            "uniform": evaluate_uniform,
+            "bar_occluded": evaluate_bar_occluded,
+            "randomly_occluded": evaluate_randomly_occluded,
+            "randomly_swapped": evaluate_randomly_swapped,
+        }[evaluation_type](evaluate_current, dataset_name, **kwargs,)
+    else:
+        raise ValueError(
+            "evaluation_type '" + evaluation_type + "' is unknown"
+        )
+
+    print(
+        'Evaluation on "'
+        + evaluation_type
+        + "_"
+        + split
+        + '" result: '
+        + str(result)
+    )
 
     if not os.path.exists(model_path + "/results"):
-        os.mkdir(model_path)
+        os.mkdir(model_path + "/results")
 
     if save:
-    with open(model_path + "/results/eval_" + split + ".txt", "w") as f:
+        with open(
+            model_path
+            + "/results/eval_"
+            + evaluation_type
+            + "_"
+            + split
+            + ".txt",
+            "w",
+        ) as f:
         f.write(str(result) + "\n")
+
+    return result
 
 
 def process_activation_kwargs(kwargs):
@@ -167,8 +235,8 @@ def process_activation_kwargs(kwargs):
     for i, activation in enumerate(current_activations):
 
         activation_kwargs, kwargs = give(
-            kwargs,
-            list(
+            kwargs,  # type: ignore
+            list(  # type: ignore
                 map(
                     lambda a: activation + "_" + a,
                     activation_params[activation],
@@ -200,8 +268,8 @@ def process_optimizer_kwargs(optimizer_name, kwargs):
 
     optimizer_kwargs, kwargs = give(
         kwargs,
-        list(
-            map(lambda a: "optimizer_" + a, optimizer_params[optimizer_name],)
+        list(  # type: ignore
+            map(lambda a: "optimizer_" + a, optimizer_params[optimizer_name])
         ),
     )
 
@@ -287,7 +355,7 @@ def train(
 
     net: Network = networks[network_name](**kwargs)
 
-    train, val, _ = create_train_validation_test(dataset_name)
+    train, val, _ = create_train_validation_test(dataset_params[dataset_name])
 
     train = torch.utils.data.DataLoader(  # type: ignore
         train, batch, shuffle=True, num_workers=4
