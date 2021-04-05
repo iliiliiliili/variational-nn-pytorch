@@ -156,9 +156,9 @@ def evaluate(
         current_dataset = {"train": train, "validation": val, "test": test}[
             split
         ]
-        current_dataset = torch.utils.data.DataLoader(  # type: ignore
-            current_dataset, batch, shuffle=False, num_workers=4
-        )
+    current_dataset = torch.utils.data.DataLoader(  # type: ignore
+        current_dataset, batch, shuffle=False, num_workers=4
+    )
 
         result = run_evaluation(
             net, current_dataset, device, correct_count, batch
@@ -222,7 +222,7 @@ def evaluate(
             + ".txt",
             "w",
         ) as f:
-            f.write(str(result) + "\n")
+        f.write(str(result) + "\n")
 
     return result
 
@@ -485,69 +485,6 @@ def train(
                         print(":::Saved Best:::")
 
     run_train()
-
-
-def just_create_description(
-    network_name,
-    dataset_name,
-    batch,
-    epochs,
-    model_path=None,
-    model_suffix="",
-    save_steps=-1,
-    validation_steps=-1,
-    optimizer=None,
-    loss_function_name="cross_entropy",
-    device="cuda:0",
-    save_best=True,
-    start_global_std: Optional[float] = None,
-    end_global_std: Optional[float] = None,
-    **kwargs,
-):
-
-    if model_path is None:
-
-        full_network_name = network_name
-
-        if dataset_name not in network_name:
-            full_network_name = dataset_name + "_" + full_network_name
-
-        full_network_name += "" if model_suffix == "" else "_" + model_suffix
-
-        model_path = "./models/" + full_network_name
-    else:
-        full_network_name = ""
-
-    if not os.path.exists(model_path):
-        os.mkdir(model_path)
-    if not os.path.exists(model_path + "/results"):
-        os.mkdir(model_path + "/results")
-    if not os.path.exists(model_path + "/best"):
-        os.mkdir(model_path + "/best")
-
-    if optimizer is None:
-        optimizer = "SGD"
-        kwargs["optimizer_lr"] = 0.001
-        kwargs["optimizer_momentum"] = 0.9
-
-    create_model_description(
-        model_path,
-        network_name=network_name,
-        dataset_name=dataset_name,
-        batch=batch,
-        epochs=epochs,
-        model_path=model_path,
-        model_suffix=model_suffix,
-        save_steps=save_steps,
-        validation_steps=validation_steps,
-        optimizer=optimizer,
-        loss_function_name=loss_function_name,
-        device=device,
-        save_best=save_best,
-        start_global_std=start_global_std,
-        end_global_std=end_global_std,
-        **kwargs,
-    )
 
 
 if __name__ == "__main__":

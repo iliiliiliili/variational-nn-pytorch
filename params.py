@@ -12,9 +12,6 @@ from networks.single_mean_variational import (
 from networks.single_std_variational import (
     SingleStdVariationalConvolution, SingleStdVariationalLinear,
 )
-from networks.parameter_std_variational import (
-    ParameterStdVariationalConvolution, ParameterStdVariationalLinear,
-)
 
 from networks.cifar10_mini_base import createCifar10MiniBase
 from networks.mnist_mlp import createMnistMlp
@@ -151,7 +148,7 @@ dataset_params = {
         "validation_size": 10000,
         "transform": {
             "all": transforms.Compose(
-                [transforms.ToTensor(), transforms.Normalize((0,), (1,))]
+                [transforms.ToTensor(), transforms.Normalize((0,), (1,)),]
             )
         },
     },
@@ -265,17 +262,11 @@ networks = {
     "mnist_base_ssvnn": createMnistBase(
         SingleStdVariationalConvolution, SingleStdVariationalLinear
     ),
-    "mnist_base_psvnn": createMnistBase(
-        ParameterStdVariationalConvolution, ParameterStdVariationalLinear
-    ),
     "mnist_auto_encoder_base_vnn": createMnistAutoEncoderBase(
         VariationalConvolution, VariationalLinear
     ),
     "cifar10_base_vnn": createCifar10Base(
         VariationalConvolution, VariationalLinear
-    ),
-    "cifar10_base_ssvnn": createCifar10Base(
-        SingleStdVariationalConvolution, SingleStdVariationalLinear
     ),
     "cifar10_base_classic": createCifar10Base(
         ClassicConvolution, ClassicLinear
@@ -285,9 +276,6 @@ networks = {
     ),
     "cifar10_mini_base_vnn": createCifar10MiniBase(
         VariationalConvolution, VariationalLinear
-    ),
-    "cifar10_mini_base_ssvnn": createCifar10MiniBase(
-        SingleStdVariationalConvolution, SingleStdVariationalLinear
     ),
     "cifar10_mini_base_classic": createCifar10MiniBase(
         ClassicConvolution, ClassicLinear
