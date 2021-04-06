@@ -5,3 +5,4 @@ datasets
 __pycache__
 scripts/*
 tools/tex-reports
+models
