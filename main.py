@@ -156,9 +156,9 @@ def evaluate(
         current_dataset = {"train": train, "validation": val, "test": test}[
             split
         ]
-    current_dataset = torch.utils.data.DataLoader(  # type: ignore
-        current_dataset, batch, shuffle=False, num_workers=4
-    )
+        current_dataset = torch.utils.data.DataLoader(  # type: ignore
+            current_dataset, batch, shuffle=False, num_workers=4
+        )
 
         result = run_evaluation(
             net, current_dataset, device, correct_count, batch
@@ -222,7 +222,7 @@ def evaluate(
             + ".txt",
             "w",
         ) as f:
-        f.write(str(result) + "\n")
+            f.write(str(result) + "\n")
 
     return result
 
@@ -244,7 +244,7 @@ def process_activation_kwargs(kwargs):
             ),
         )
 
-        if activation in current_activations[i + 1 :]:
+        if activation in current_activations[i + 1:]:
             kwargs = {**kwargs, **activation_kwargs}
 
         func = activations[activation](
