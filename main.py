@@ -112,21 +112,28 @@ def create_model_description(path, **kwargs):
         json.dump(kwargs, f)
 
 
+def load_training_parameters(path):
+
+    with open(path) as f:
+        params = json.load(f)
+
+    return params
+
+
 def evaluate(
-    network_name,
-    dataset_name,
+    network_name=None,
+    dataset_name=None,
+    restore_training_parameters=True,
+    use_best=True,
     batch=1,
     model_path=None,
     model_suffix="",
     split="validation",
     device="cuda:0",
-    save=True,
     evaluation_type="normal",
+    save=True,
     **kwargs,
 ):
-
-    if "activation" in kwargs:
-        kwargs = process_activation_kwargs(kwargs)
 
     if model_path is None:
 
@@ -139,11 +146,91 @@ def evaluate(
 
         model_path = "./models/" + full_network_name
 
+    parameters = {
+
+    }
+
+    non_kwargs = [
+        "network_name",
+        "dataset_name",
+        "restore_training_parameters",
+        "use_best",
+        "batch",
+        "model_path",
+        "model_suffix",
+        "split",
+        "device",
+        "evaluation_type",
+        "save",
+    ]
+
+    given_parameters = {
+        "network_name": network_name,
+        "dataset_name": dataset_name,
+        "restore_training_parameters": restore_training_parameters,
+        "use_best": use_best,
+        "batch": batch,
+        "model_path": model_path,
+        "model_suffix": model_suffix,
+        "split": split,
+        "device": device,
+        "evaluation_type": evaluation_type,
+        "save": save,
+        **kwargs,
+    }
+
+    if restore_training_parameters:
+        training_parameters = load_training_parameters(
+            model_path + "/training_parameters.json"
+        )
+
+        ignored_parameters = [
+            "epochs",
+            "save_steps",
+            "validation_steps",
+            "loss_function_name",
+            "device",
+            "save_best",
+            "start_global_std",
+            "end_global_std",
+        ]
+
+        for key, val in training_parameters.items():
+            if (key not in ignored_parameters) and ("optimizer" not in key):
+                parameters[key] = val
+
+    for key, val in given_parameters.items():
+        if val is not None:
+            parameters[key] = val
+
+    network_name = parameters["network_name"]
+    dataset_name = parameters["dataset_name"]
+    use_best = parameters["use_best"]
+    batch = parameters["batch"]
+    model_path = parameters["model_path"]
+    model_suffix = parameters["model_suffix"]
+    split = parameters["split"]
+    device = parameters["device"]
+    evaluation_type = parameters["evaluation_type"]
+    save = parameters["save"]
+
+    if use_best:
+        model_path += "/best"
+
+    kwargs = {}
+    for key, val in parameters.items():
+        if key not in non_kwargs:
+            kwargs[key] = val
+
+    if "activation" in kwargs:
+        kwargs = process_activation_kwargs(kwargs)
+
     device = torch.device(device if torch.cuda.is_available() else "cpu")
 
     net: Network = networks[network_name](**kwargs)
 
     net.load(model_path, device)
+    net.to(device)
 
     result = None
 

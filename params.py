@@ -148,7 +148,7 @@ dataset_params = {
         "validation_size": 10000,
         "transform": {
             "all": transforms.Compose(
-                [transforms.ToTensor(), transforms.Normalize((0,), (1,)),]
+                [transforms.ToTensor(), transforms.Normalize((0,), (1,))]
             )
         },
     },

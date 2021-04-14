@@ -226,4 +226,3 @@ if __name__ == "__main__":
         device,
         learning_rate=0.001,
     )
-
