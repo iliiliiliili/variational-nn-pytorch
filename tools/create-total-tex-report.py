@@ -12,11 +12,11 @@ template_file = (
     "tools/tex-report-template-long.tex" if len(sys.argv) < 4 else sys.argv[3]
 )
 top_k = (
-    5 if len(sys.argv) < 5 else int(sys.argv[4])
+    10 if len(sys.argv) < 5 else int(sys.argv[4])
 )
 
-captions = "    Dataset & Model & Type & Activation & ActMode & optimizer & BN/DO & Accuracy\\\\ [0.5ex] \n        \\hline"
-mode = "|c c c c c c c c|"
+captions = "    Dataset & Model & Type & Activation & Optimizer & BN/DO & Accuracy\\\\ [0.5ex] \n        \\hline"
+mode = "|c c c c c c c|"
 
 with open(template_file, "r") as f:
     template = f.read()
@@ -25,6 +25,8 @@ with open(template_file, "r") as f:
 def get_model_group(model_name):
 
     groups = [
+        "densenet1",
+        "densenet2",
         "densenet",
         "resnet",
         "vgg",
@@ -49,6 +51,9 @@ def parse_model_params(path):
         network_type = "Normal"
         regularization_type = ""
         activation_mode = "mean"
+
+        if "densenet" in params["network_name"]:
+            regularization_type += "BN E"
 
         if "dropout" in params["network_name"]:
             network_type = "Normal"
@@ -86,7 +91,7 @@ def parse_model_params(path):
 
         activation_mode = (
             activation_mode
-            .replace("+", "")
+            .replace("+", " ")
             .replace("mean", "M")
             .replace("std", "S")
             .replace("end", "E")
@@ -112,12 +117,21 @@ def parse_model_params(path):
             .replace("noact", "")
         )
 
+        activations = activation.split(" ")
+        activation_modes = activation_mode.split(" ")
+
+        activation = []
+
+        for a, m in zip(activations, activation_modes):
+            activation.append(m + ":" + a)
+
+        activation = " ".join(activation)
+
         result = [
             params["dataset_name"].replace("_", " "),
             network_name.replace("_", " "),
             network_type.replace("_", " "),
             activation.replace("_", " "),
-            activation_mode.replace("_", " "),
             params["optimizer"].replace("_", " "),
             regularization_type.replace("_", " "),
         ]
