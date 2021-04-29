@@ -1,9 +1,11 @@
 from perturbed_evaluation import (
     evaluate_bar_occluded,
     evaluate_gaussian,
-    evaluate_randomly_occluded, evaluate_randomly_swapped,
+    evaluate_randomly_occluded,
+    evaluate_randomly_swapped,
     evaluate_uniform,
 )
+from attacked_evaluation import evaluate_attacked
 from metrics import AverageMetric
 from networks.variational import VariationalBase
 from typing import Optional
@@ -67,7 +69,12 @@ def correct_count(output, target):
     return labels.eq(target.data.view_as(labels)).sum()
 
 
-def run_evaluation(net: Network, val, device, correct_count, batch):
+def run_evaluation(
+    net: Network, val, device, correct_count, batch, eval_step=None
+):
+
+    if eval_step is None:
+        eval_step = net.eval_step
 
     print()
 
@@ -81,7 +88,7 @@ def run_evaluation(net: Network, val, device, correct_count, batch):
         data = data.to(device)
         target = target.to(device)
 
-        loss, correct = net.eval_step(  # type: ignore
+        loss, correct = eval_step(  # type: ignore
             data, target, correct_count=correct_count
         )
 
@@ -131,6 +138,7 @@ def evaluate(
     split="validation",
     device="cuda:0",
     evaluation_type="normal",
+    attack_type=None,
     save=True,
     **kwargs,
 ):
@@ -146,9 +154,7 @@ def evaluate(
 
         model_path = "./models/" + full_network_name
 
-    parameters = {
-
-    }
+    parameters = {}
 
     non_kwargs = [
         "network_name",
@@ -161,6 +167,7 @@ def evaluate(
         "split",
         "device",
         "evaluation_type",
+        "attack_type",
         "save",
     ]
 
@@ -175,6 +182,7 @@ def evaluate(
         "split": split,
         "device": device,
         "evaluation_type": evaluation_type,
+        "attack_type": attack_type,
         "save": save,
         **kwargs,
     }
@@ -212,6 +220,7 @@ def evaluate(
     split = parameters["split"]
     device = parameters["device"]
     evaluation_type = parameters["evaluation_type"]
+    attack_type = parameters["attack_type"]
     save = parameters["save"]
 
     if use_best:
@@ -282,6 +291,80 @@ def evaluate(
             "randomly_occluded": evaluate_randomly_occluded,
             "randomly_swapped": evaluate_randomly_swapped,
         }[evaluation_type](evaluate_current, dataset_name, **kwargs,)
+    elif evaluation_type in [
+        "attacked",
+    ]:
+
+        class Normalize(torch.nn.Module):
+            def __init__(self, mean, std):
+                super(Normalize, self).__init__()
+                self.channels = len(mean)
+                self.register_buffer("mean", torch.Tensor(mean))
+                self.register_buffer("std", torch.Tensor(std))
+
+            def forward(self, input):
+                # Broadcasting
+                mean = self.mean.reshape(1, self.channels, 1, 1)
+                std = self.std.reshape(1, self.channels, 1, 1)
+                return (input - mean) / std
+
+        def evaluate_current(current_dataset_params, attack):
+            train, val, test = create_train_validation_test(
+                current_dataset_params
+            )
+            current_dataset = {
+                "train": train,
+                "validation": val,
+                "test": test,
+            }[split]
+            current_dataset = torch.utils.data.DataLoader(  # type: ignore
+                current_dataset, batch, shuffle=False, num_workers=0
+            )
+
+            if "mean" in current_dataset_params:
+                normalized_net = torch.nn.Sequential(
+                    Normalize(
+                        current_dataset_params["mean"],
+                        current_dataset_params["std"],
+                    ),
+                    net,
+                ).to(device)
+            else:
+                normalized_net = net
+
+            def attack_step(
+                input, target, correct_count=None,
+            ):
+                nonlocal normalized_net
+                adv_images = attack(input, target)
+                output = normalized_net(adv_images)
+                loss = (
+                    net.loss_func(output, target).item()
+                    if hasattr(net, "loss_func")
+                    else None
+                )
+
+                if correct_count is None:
+                    return loss
+                else:
+                    return loss, correct_count(output, target)
+
+            return run_evaluation(
+                normalized_net,
+                current_dataset,
+                device,
+                correct_count,
+                batch,
+                eval_step=attack_step,
+            )
+
+        result = evaluate_attacked(
+            attack_type,
+            net,
+            evaluate_current,
+            dataset_name,
+            **kwargs,
+        )
     else:
         raise ValueError(
             "evaluation_type '" + evaluation_type + "' is unknown"
@@ -331,7 +414,7 @@ def process_activation_kwargs(kwargs):
             ),
         )
 
-        if activation in current_activations[i + 1:]:
+        if activation in current_activations[i + 1 :]:
             kwargs = {**kwargs, **activation_kwargs}
 
         func = activations[activation](

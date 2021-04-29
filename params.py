@@ -44,12 +44,83 @@ from networks import vgg_pure
 
 SEED = 2605
 
+attacked_dataset_params = {
+
+    "mnist": {
+        "dataset": datasets.MNIST,
+        "path": "./datasets/",
+        "train_size": 59000,
+        "validation_size": 1000,
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            )
+        },
+        "mean": (0.1307,),
+        "std": (0.3081,),
+    },
+    "cifar10": {
+        "dataset": datasets.CIFAR10,
+        "path": "./datasets/",
+        "train_size": 40000,
+        "validation_size": 10000,
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            )
+        },
+        "mean": (0.5, 0.5, 0.5),
+        "std": (0.5, 0.5, 0.5),
+    },
+    "cifar10_n": {
+        "dataset": datasets.CIFAR10,
+        "path": "./datasets/",
+        "train_size": 40000,
+        "validation_size": 10000,
+        "transform": {
+            "all": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            )
+        },
+        "mean": [x / 255 for x in [125.3, 123.0, 113.9]],
+        "std": [x / 255 for x in [63.0, 62.1, 66.7]],
+    },
+    "cifar10_n2": lambda noise: {
+        "dataset": datasets.CIFAR10,
+        "path": "./datasets/",
+        "train_size": 40000,
+        "validation_size": 10000,
+        "transform": {
+            "train": transforms.Compose(
+                [
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomCrop(32, padding=4),
+                    transforms.ToTensor(),
+                ]
+            ),
+            "test": transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            ),
+        },
+        "mean": [x / 255 for x in [125.3, 123.0, 113.9]],
+        "std": [x / 255 for x in [63.0, 62.1, 66.7]],
+    },
+}
+
 perturbed_dataset_params = {
 
     "mnist": lambda noise: {
         "dataset": datasets.MNIST,
         "path": "./datasets/",
-        "train_size":           59000,
+        "train_size": 59000,
         "validation_size": 1000,
         "transform": {
             "all": transforms.Compose(
