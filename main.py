@@ -25,6 +25,7 @@ from params import (
     optimizer_params,
     optimizers,
 )
+import time
 
 
 def create_train_validation_test(params):
@@ -82,15 +83,30 @@ def run_evaluation(
     VariationalBase.GLOBAL_STD = 0
 
     accuracy_metric = AverageMetric()
+    accuracy_metric2 = None
+    fps_metric = AverageMetric()
+    fps_metric.skip(3)
 
     for i, (data, target) in enumerate(val):
 
         data = data.to(device)
         target = target.to(device)
 
+        t = time.time()
+
         loss, correct = eval_step(  # type: ignore
             data, target, correct_count=correct_count
         )
+
+        t = time.time() - t
+        fps_metric.update(1 / t)
+
+        if isinstance(correct, list):
+            if accuracy_metric2 is None:
+                accuracy_metric2 = AverageMetric()
+
+            accuracy_metric2.update(float(correct[1]) / batch)
+            correct = correct[0]
 
         accuracy_metric.update(float(correct) / batch)
 
@@ -103,14 +119,20 @@ def run_evaluation(
             + " loss="
             + str(loss)
             + " acc="
-            + str(accuracy_metric.get()),
+            + str(accuracy_metric.get())
+            + ((
+                " acc2="
+                + str(accuracy_metric2.get())
+            ) if accuracy_metric2 is not None else "")
+            + " fps="
+            + str(fps_metric.get(-1)),
             end="\r",
         )
 
     print()
 
     net.train()
-    return accuracy_metric.get()
+    return accuracy_metric.get(), fps_metric.get(-1)
 
 
 def create_model_description(path, **kwargs):
@@ -138,7 +160,7 @@ def evaluate(
     split="validation",
     device="cuda:0",
     evaluation_type="normal",
-    attack_type=None,
+    attack_types=None,
     save=True,
     **kwargs,
 ):
@@ -167,7 +189,7 @@ def evaluate(
         "split",
         "device",
         "evaluation_type",
-        "attack_type",
+        "attack_types",
         "save",
     ]
 
@@ -182,7 +204,7 @@ def evaluate(
         "split": split,
         "device": device,
         "evaluation_type": evaluation_type,
-        "attack_type": attack_type,
+        "attack_types": attack_types,
         "save": save,
         **kwargs,
     }
@@ -220,7 +242,7 @@ def evaluate(
     split = parameters["split"]
     device = parameters["device"]
     evaluation_type = parameters["evaluation_type"]
-    attack_type = parameters["attack_type"]
+    attack_types = parameters["attack_types"]
     save = parameters["save"]
 
     if use_best:
@@ -242,6 +264,7 @@ def evaluate(
     net.to(device)
 
     result = None
+    fps = None
 
     if evaluation_type == "normal":
 
@@ -256,7 +279,7 @@ def evaluate(
             current_dataset, batch, shuffle=False, num_workers=4
         )
 
-        result = run_evaluation(
+        result, fps = run_evaluation(
             net, current_dataset, device, correct_count, batch
         )
     elif evaluation_type in [
@@ -328,6 +351,7 @@ def evaluate(
                         current_dataset_params["std"],
                     ),
                     net,
+                    torch.nn.Softmax(-1),
                 ).to(device)
             else:
                 normalized_net = net
@@ -336,6 +360,7 @@ def evaluate(
                 input, target, correct_count=None,
             ):
                 nonlocal normalized_net
+
                 adv_images = attack(input, target)
                 output = normalized_net(adv_images)
                 loss = (
@@ -347,7 +372,13 @@ def evaluate(
                 if correct_count is None:
                     return loss
                 else:
-                    return loss, correct_count(output, target)
+                    return (
+                        loss,
+                        [
+                            correct_count(output, target),
+                            correct_count(normalized_net(input), target),
+                        ],
+                    )
 
             return run_evaluation(
                 normalized_net,
@@ -359,11 +390,7 @@ def evaluate(
             )
 
         result = evaluate_attacked(
-            attack_type,
-            net,
-            evaluate_current,
-            dataset_name,
-            **kwargs,
+            attack_types, net, evaluate_current, dataset_name, **kwargs,
         )
     else:
         raise ValueError(

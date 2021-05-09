@@ -28,7 +28,7 @@ def evaluate_gaussian(
             result = x + torch.normal(torch.ones(x.shape) * mean, std,)
             return result
 
-        result = evaluate(
+        result, fps = evaluate(
             perturbed_dataset_params[dataset_name](gaussian_noise)
         )
         results.append(
@@ -58,7 +58,7 @@ def evaluate_uniform(
             result = x + mean + std * torch.rand_like(torch.ones(x.shape))
             return result
 
-        result = evaluate(
+        result, fps = evaluate(
             perturbed_dataset_params[dataset_name](gaussian_noise)
         )
         results.append(
@@ -106,7 +106,7 @@ def evaluate_bar_occluded(
 
             return result
 
-        result = evaluate(perturbed_dataset_params[dataset_name](occluded))
+        result, fps = evaluate(perturbed_dataset_params[dataset_name](occluded))
 
         results.append("bounds: " + str(bounds) + " result: " + str(result))
 
@@ -143,7 +143,7 @@ def evaluate_randomly_occluded(
 
             return result
 
-        result = evaluate(perturbed_dataset_params[dataset_name](occluded))
+        result, fps = evaluate(perturbed_dataset_params[dataset_name](occluded))
 
         results.append(
             "occlusion_chanse: "
@@ -194,7 +194,7 @@ def evaluate_randomly_swapped(
 
             return result
 
-        result = evaluate(perturbed_dataset_params[dataset_name](swapped))
+        result, fps = evaluate(perturbed_dataset_params[dataset_name](swapped))
 
         results.append(
             "swaps: "

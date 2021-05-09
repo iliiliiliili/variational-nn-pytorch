@@ -31,15 +31,28 @@ class AverageMetric(Metric):
         super().__init__()
 
         self.value = []
+        self.to_skip = 0
 
-    def get(self):
+    def get(self, default=None):
+
+        if len(self.value) == 0 and default is not None:
+            return default
+
         return sum(self.value) / len(self.value)
 
     def update(self, value):
+
+        if self.to_skip > 0:
+            self.to_skip -= 1
+            return
+
         self.value.append(value)
 
     def clear(self):
         self.value = []
+
+    def skip(self, amount):
+        self.to_skip = amount
 
 
 class MaxMetric(Metric):
