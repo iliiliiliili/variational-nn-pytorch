@@ -2,10 +2,12 @@ from typing import Callable, Optional
 import torch
 from torch import nn
 import os
+from metrics import MeanStdMetric
 
 
 class Network(nn.Module):
     def __init__(self) -> None:
+        self.uncertainty_value = None
         super().__init__()
 
     def prepare_train(
@@ -74,3 +76,25 @@ class Network(nn.Module):
         self.load_state_dict(
             torch.load(load_path + "/model.pth", map_location=device)
         )
+
+    def uncertainty(self, method="uncertainty_layer", params=None):
+
+        if (
+            method == "uncertainty_layer"
+            and self.uncertainty_value is not None
+        ):
+            return self.uncertainty_value
+        elif method == "monte-carlo":
+            if "repeats" not in params:
+                params["repeats"] = 10
+
+            mean_std_metric = MeanStdMetric()
+
+            for i in range(params["repeats"]):
+                mean_std_metric.update(
+                    self(params["input"]).detach().cpu().numpy()
+                )
+
+            return mean_std_metric.get()
+
+        raise Exception("No such uncertainty method available for this model")

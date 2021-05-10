@@ -6,34 +6,43 @@ from torch import nn
 class VariationalBase(nn.Module):
 
     GLOBAL_STD: float = 0
+    LOG_STDS = False
 
     def __init__(self) -> None:
         super().__init__()
 
     def build(
-        self, means: nn.Module, stds: Any,
+        self,
+        means: nn.Module,
+        stds: Any,
         batch_norm_module: Any,
         batch_norm_size: int,
         activation: Optional[Union[nn.Module, List[nn.Module]]] = None,
         activation_mode: Union[
-            Literal['mean'], Literal['std'],
-            Literal['mean+std'], Literal['end'],
-            Literal['mean+end'], Literal['std+end'],
-            Literal['mean+std+end']
-        ] = 'mean',
+            Literal["mean"],
+            Literal["std"],
+            Literal["mean+std"],
+            Literal["end"],
+            Literal["mean+end"],
+            Literal["std+end"],
+            Literal["mean+std+end"],
+        ] = "mean",
         use_batch_norm: bool = False,
         batch_norm_mode: Union[
-            Literal['mean'], Literal['std'],
-            Literal['mean+std'], Literal['end'],
-            Literal['mean+end'], Literal['std+end'],
-            Literal['mean+std+end']
-        ] = 'mean',
+            Literal["mean"],
+            Literal["std"],
+            Literal["mean+std"],
+            Literal["end"],
+            Literal["mean+end"],
+            Literal["std+end"],
+            Literal["mean+std+end"],
+        ] = "mean",
         batch_norm_eps: float = 1e-3,
         batch_norm_momentum: float = 0.01,
         global_std_mode: Union[
-            Literal['none'], Literal['replace'],
-            Literal['multiply']
-        ] = 'none'
+            Literal["none"], Literal["replace"], Literal["multiply"]
+        ] = "none",
+        uncertainty_placeholder=None,
     ) -> None:
 
         super().__init__()
@@ -46,22 +55,31 @@ class VariationalBase(nn.Module):
 
         self.global_std_mode = global_std_mode
 
+        self.set_uncertainty = None
+
+        if uncertainty_placeholder is not None:
+
+            def set_uncertainty(value):
+                uncertainty_placeholder.uncertainty_value = value
+
+            self.set_uncertainty = set_uncertainty
+
         if use_batch_norm:
 
-            batch_norm_targets = batch_norm_mode.split('+')
+            batch_norm_targets = batch_norm_mode.split("+")
 
             for i, target in enumerate(batch_norm_targets):
 
-                if target == 'mean':
+                if target == "mean":
                     self.means = nn.Sequential(
                         self.means,
                         batch_norm_module(
                             batch_norm_size,
                             eps=batch_norm_eps,
                             momentum=batch_norm_momentum,
-                        )
+                        ),
                     )
-                elif target == 'std':
+                elif target == "std":
                     if self.stds is not None:
                         self.stds = nn.Sequential(
                             self.stds,
@@ -69,44 +87,41 @@ class VariationalBase(nn.Module):
                                 batch_norm_size,
                                 eps=batch_norm_eps,
                                 momentum=batch_norm_momentum,
-                            )
+                            ),
                         )
-                elif target == 'end':
+                elif target == "end":
                     self.end_batch_norm = batch_norm_module(
                         batch_norm_size,
                         eps=batch_norm_eps,
                         momentum=batch_norm_momentum,
                     )
                 else:
-                    raise ValueError('Unknown batch norm target: ' + target)
+                    raise ValueError("Unknown batch norm target: " + target)
 
         if activation is not None:
 
-            activation_targets = activation_mode.split('+')
+            activation_targets = activation_mode.split("+")
 
             for i, target in enumerate(activation_targets):
 
                 if len(activation_targets) == 1:
                     current_activation: nn.Module = activation  # type: ignore
                 else:
-                    current_activation: nn.Module = \
-                        activation[i]  # type: ignore
+                    current_activation: nn.Module = activation[
+                        i
+                    ]  # type: ignore
 
-                if target == 'mean':
-                    self.means = nn.Sequential(
-                        self.means,
-                        current_activation,
-                    )
-                elif target == 'std':
+                if target == "mean":
+                    self.means = nn.Sequential(self.means, current_activation,)
+                elif target == "std":
                     if self.stds is not None:
                         self.stds = nn.Sequential(
-                            self.stds,
-                            current_activation,
+                            self.stds, current_activation,
                         )
-                elif target == 'end':
+                elif target == "end":
                     self.end_activation = current_activation
                 else:
-                    raise ValueError('Unknown activation target: ' + target)
+                    raise ValueError("Unknown activation target: " + target)
 
     def forward(self, x):
 
@@ -117,10 +132,13 @@ class VariationalBase(nn.Module):
         else:
             stds = 0
 
-        if self.global_std_mode == 'replace':
+        if self.global_std_mode == "replace":
             stds = VariationalBase.GLOBAL_STD
-        elif self.global_std_mode == 'multiply':
+        elif self.global_std_mode == "multiply":
             stds = VariationalBase.GLOBAL_STD * stds
+
+        if self.set_uncertainty is not None:
+            self.set_uncertainty(stds)
 
         result = torch.distributions.Normal(means, stds).rsample()
 
@@ -134,30 +152,37 @@ class VariationalBase(nn.Module):
 
 
 class VariationalConvolution(VariationalBase):
-
     def __init__(
-        self, in_channels: int, out_channels: int,
-        kernel_size: int, stride: Union[Tuple, int] = 1,
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        stride: Union[Tuple, int] = 1,
         activation: Optional[Union[nn.Module, List[nn.Module]]] = None,
         activation_mode: Union[
-            Literal['mean'], Literal['std'],
-            Literal['mean+std'], Literal['end'],
-            Literal['mean+end'], Literal['std+end'],
-            Literal['mean+std+end']
-        ] = 'mean',
+            Literal["mean"],
+            Literal["std"],
+            Literal["mean+std"],
+            Literal["end"],
+            Literal["mean+end"],
+            Literal["std+end"],
+            Literal["mean+std+end"],
+        ] = "mean",
         use_batch_norm: bool = False,
         batch_norm_mode: Union[
-            Literal['mean'], Literal['std'],
-            Literal['mean+std'], Literal['end'],
-            Literal['mean+end'], Literal['std+end'],
-            Literal['mean+std+end']
-        ] = 'end',
+            Literal["mean"],
+            Literal["std"],
+            Literal["mean+std"],
+            Literal["end"],
+            Literal["mean+end"],
+            Literal["std+end"],
+            Literal["mean+std+end"],
+        ] = "end",
         batch_norm_eps: float = 1e-3,
         batch_norm_momentum: float = 0.01,
         global_std_mode: Union[
-            Literal['none'], Literal['replace'],
-            Literal['multiply']
-        ] = 'none',
+            Literal["none"], Literal["replace"], Literal["multiply"]
+        ] = "none",
         bias=True,
         **kwargs,
     ) -> None:
@@ -173,10 +198,10 @@ class VariationalConvolution(VariationalBase):
             kernel_size=kernel_size,
             stride=stride,
             bias=bias,
-            **kwargs
+            **kwargs,
         )
 
-        if global_std_mode == 'replace':
+        if global_std_mode == "replace":
             stds = None
         else:
             stds = nn.Conv2d(
@@ -185,11 +210,12 @@ class VariationalConvolution(VariationalBase):
                 kernel_size=kernel_size,
                 stride=stride,
                 bias=bias,
-                **kwargs
+                **kwargs,
             )
 
         super().build(
-            means, stds,
+            means,
+            stds,
             nn.BatchNorm2d,
             out_channels,
             activation=activation,
@@ -203,30 +229,37 @@ class VariationalConvolution(VariationalBase):
 
 
 class VariationalLinear(VariationalBase):
-
     def __init__(
-        self, in_features: int, out_features: int,
+        self,
+        in_features: int,
+        out_features: int,
         activation: Optional[Union[nn.Module, List[nn.Module]]] = None,
         activation_mode: Union[
-            Literal['mean'], Literal['std'],
-            Literal['mean+std'], Literal['end'],
-            Literal['mean+end'], Literal['std+end'],
-            Literal['mean+std+end']
-        ] = 'mean',
+            Literal["mean"],
+            Literal["std"],
+            Literal["mean+std"],
+            Literal["end"],
+            Literal["mean+end"],
+            Literal["std+end"],
+            Literal["mean+std+end"],
+        ] = "mean",
         use_batch_norm: bool = False,
         batch_norm_mode: Union[
-            Literal['mean'], Literal['std'],
-            Literal['mean+std'], Literal['end'],
-            Literal['mean+end'], Literal['std+end'],
-            Literal['mean+std+end']
-        ] = 'mean',
+            Literal["mean"],
+            Literal["std"],
+            Literal["mean+std"],
+            Literal["end"],
+            Literal["mean+end"],
+            Literal["std+end"],
+            Literal["mean+std+end"],
+        ] = "mean",
         batch_norm_eps: float = 1e-3,
         batch_norm_momentum: float = 0.01,
         global_std_mode: Union[
-            Literal['none'], Literal['replace'],
-            Literal['multiply']
-        ] = 'none',
+            Literal["none"], Literal["replace"], Literal["multiply"]
+        ] = "none",
         bias=True,
+        uncertainty_placeholder=None,
         **kwargs,
     ) -> None:
 
@@ -235,23 +268,16 @@ class VariationalLinear(VariationalBase):
         if use_batch_norm:
             bias = False
 
-        means = nn.Linear(
-            in_features, out_features,
-            bias=bias,
-            **kwargs
-        )
+        means = nn.Linear(in_features, out_features, bias=bias, **kwargs)
 
-        if global_std_mode == 'replace':
+        if global_std_mode == "replace":
             stds = None
         else:
-            stds = nn.Linear(
-                in_features, out_features,
-                bias=bias,
-                **kwargs
-            )
+            stds = nn.Linear(in_features, out_features, bias=bias, **kwargs)
 
         super().build(
-            means, stds,
+            means,
+            stds,
             nn.BatchNorm1d,
             out_features,
             activation=activation,
@@ -261,35 +287,44 @@ class VariationalLinear(VariationalBase):
             batch_norm_eps=batch_norm_eps,
             batch_norm_momentum=batch_norm_momentum,
             global_std_mode=global_std_mode,
+            uncertainty_placeholder=uncertainty_placeholder,
         )
 
 
 class VariationalConvolutionTranspose(VariationalBase):
-
     def __init__(
-        self, in_channels: int, out_channels: int,
-        kernel_size: int, stride: Union[Tuple, int] = 1,
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        stride: Union[Tuple, int] = 1,
         activation: Optional[Union[nn.Module, List[nn.Module]]] = None,
         activation_mode: Union[
-            Literal['mean'], Literal['std'],
-            Literal['mean+std'], Literal['end'],
-            Literal['mean+end'], Literal['std+end'],
-            Literal['mean+std+end']
-        ] = 'mean',
+            Literal["mean"],
+            Literal["std"],
+            Literal["mean+std"],
+            Literal["end"],
+            Literal["mean+end"],
+            Literal["std+end"],
+            Literal["mean+std+end"],
+        ] = "mean",
         use_batch_norm: bool = False,
         batch_norm_mode: Union[
-            Literal['mean'], Literal['std'],
-            Literal['mean+std'], Literal['end'],
-            Literal['mean+end'], Literal['std+end'],
-            Literal['mean+std+end']
-        ] = 'end',
+            Literal["mean"],
+            Literal["std"],
+            Literal["mean+std"],
+            Literal["end"],
+            Literal["mean+end"],
+            Literal["std+end"],
+            Literal["mean+std+end"],
+        ] = "end",
         batch_norm_eps: float = 1e-3,
         batch_norm_momentum: float = 0.01,
         global_std_mode: Union[
-            Literal['none'], Literal['replace'],
-            Literal['multiply']
-        ] = 'none',
+            Literal["none"], Literal["replace"], Literal["multiply"]
+        ] = "none",
         bias=True,
+        uncertainty_placeholder=None,
         **kwargs,
     ) -> None:
 
@@ -304,10 +339,10 @@ class VariationalConvolutionTranspose(VariationalBase):
             kernel_size=kernel_size,
             stride=stride,
             bias=bias,
-            **kwargs
+            **kwargs,
         )
 
-        if global_std_mode == 'replace':
+        if global_std_mode == "replace":
             stds = None
         else:
             stds = nn.ConvTranspose2d(
@@ -316,11 +351,12 @@ class VariationalConvolutionTranspose(VariationalBase):
                 kernel_size=kernel_size,
                 stride=stride,
                 bias=bias,
-                **kwargs
+                **kwargs,
             )
 
         super().build(
-            means, stds,
+            means,
+            stds,
             nn.BatchNorm2d,
             out_channels,
             activation=activation,
@@ -330,4 +366,5 @@ class VariationalConvolutionTranspose(VariationalBase):
             batch_norm_eps=batch_norm_eps,
             batch_norm_momentum=batch_norm_momentum,
             global_std_mode=global_std_mode,
+            uncertainty_placeholder=uncertainty_placeholder,
         )

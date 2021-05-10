@@ -120,10 +120,11 @@ def run_evaluation(
             + str(loss)
             + " acc="
             + str(accuracy_metric.get())
-            + ((
-                " acc2="
-                + str(accuracy_metric2.get())
-            ) if accuracy_metric2 is not None else "")
+            + (
+                (" acc2=" + str(accuracy_metric2.get()))
+                if accuracy_metric2 is not None
+                else ""
+            )
             + " fps="
             + str(fps_metric.get(-1)),
             end="\r",
@@ -391,6 +392,214 @@ def evaluate(
 
         result = evaluate_attacked(
             attack_types, net, evaluate_current, dataset_name, **kwargs,
+        )
+    else:
+        raise ValueError(
+            "evaluation_type '" + evaluation_type + "' is unknown"
+        )
+
+    print(
+        'Evaluation on "'
+        + evaluation_type
+        + "_"
+        + split
+        + '" result: '
+        + str(result)
+    )
+
+    if not os.path.exists(model_path + "/results"):
+        os.mkdir(model_path + "/results")
+
+    if save:
+        with open(
+            model_path
+            + "/results/eval_"
+            + evaluation_type
+            + "_"
+            + split
+            + ".txt",
+            "w",
+        ) as f:
+            f.write(str(result) + "\n")
+
+    return result
+
+
+def run_evaluation_uncertainty(
+    net: Network, val, device, correct_count, batch, eval_step=None
+):
+
+    if eval_step is None:
+        eval_step = net.eval_step
+
+    print()
+
+    net.eval()
+    VariationalBase.GLOBAL_STD = 0
+    VariationalBase.LOG_STDS = True
+
+    for i, (data, target) in enumerate(val):
+
+        data = data.to(device)
+        target = target.to(device)
+
+        output = net(data)
+        uncertainty = net.uncertainty()
+        softmax_output = torch.nn.functional.softmax(output, -1)
+        softmax_uncertainty = torch.nn.functional.softmax(uncertainty, -1)
+
+        monte_carlo_mean, monte_carlo_uncertainty = net.uncertainty(
+            "monte-carlo", {"input": data}
+        )
+
+        print(
+            "target",
+            target,
+            "(correct output)"
+            if correct_count(output, target) > 0
+            else "(wrong output)",
+        )
+        print("output", output)
+        print("uncertainty", uncertainty)
+        print("softmax_output", softmax_output)
+        print("softmax_uncertainty", softmax_uncertainty)
+        print()
+        print("monte_carlo_mean", monte_carlo_mean)
+        print("monte_carlo_uncertainty", monte_carlo_uncertainty)
+
+        print("-----")
+
+    return None
+
+
+def evaluate_uncertainty(
+    network_name=None,
+    dataset_name=None,
+    restore_training_parameters=True,
+    use_best=True,
+    batch=1,
+    model_path=None,
+    model_suffix="",
+    split="validation",
+    device="cuda:0",
+    evaluation_type="monte-carlo-vs-single",
+    save=True,
+    **kwargs,
+):
+
+    if model_path is None:
+
+        full_network_name = network_name
+
+        if dataset_name not in network_name:
+            full_network_name = dataset_name + "_" + full_network_name
+
+        full_network_name += "" if model_suffix == "" else "_" + model_suffix
+
+        model_path = "./models/" + full_network_name
+
+    parameters = {}
+
+    non_kwargs = [
+        "network_name",
+        "dataset_name",
+        "restore_training_parameters",
+        "use_best",
+        "batch",
+        "model_path",
+        "model_suffix",
+        "split",
+        "device",
+        "evaluation_type",
+        "save",
+    ]
+
+    given_parameters = {
+        "network_name": network_name,
+        "dataset_name": dataset_name,
+        "restore_training_parameters": restore_training_parameters,
+        "use_best": use_best,
+        "batch": batch,
+        "model_path": model_path,
+        "model_suffix": model_suffix,
+        "split": split,
+        "device": device,
+        "evaluation_type": evaluation_type,
+        "save": save,
+        **kwargs,
+    }
+
+    if restore_training_parameters:
+        training_parameters = load_training_parameters(
+            model_path + "/training_parameters.json"
+        )
+
+        ignored_parameters = [
+            "epochs",
+            "save_steps",
+            "validation_steps",
+            "loss_function_name",
+            "device",
+            "save_best",
+            "start_global_std",
+            "end_global_std",
+        ]
+
+        for key, val in training_parameters.items():
+            if (key not in ignored_parameters) and ("optimizer" not in key):
+                parameters[key] = val
+
+    for key, val in given_parameters.items():
+        if val is not None:
+            parameters[key] = val
+
+    network_name = parameters["network_name"]
+    dataset_name = parameters["dataset_name"]
+    use_best = parameters["use_best"]
+    batch = parameters["batch"]
+    model_path = parameters["model_path"]
+    model_suffix = parameters["model_suffix"]
+    split = parameters["split"]
+    device = parameters["device"]
+    evaluation_type = parameters["evaluation_type"]
+    save = parameters["save"]
+
+    if use_best:
+        model_path += "/best"
+
+    kwargs = {}
+    for key, val in parameters.items():
+        if key not in non_kwargs:
+            kwargs[key] = val
+
+    if "activation" in kwargs:
+        kwargs = process_activation_kwargs(kwargs)
+
+    device = torch.device(device if torch.cuda.is_available() else "cpu")
+
+    net: Network = networks[network_name](**kwargs)
+
+    net.load(model_path, device)
+    net.to(device)
+
+    result = None
+    fps = None
+
+    if evaluation_type == "monte-carlo-vs-single":
+
+        train, val, test = create_train_validation_test(
+            dataset_params[dataset_name]
+        )
+
+        current_dataset = {"train": train, "validation": val, "test": test}[
+            split
+        ]
+        current_dataset = torch.utils.data.DataLoader(  # type: ignore
+            current_dataset, batch, shuffle=False, num_workers=4
+        )
+
+        result, run_evaluation_uncertainty(
+            net, current_dataset, device, correct_count, batch
         )
     else:
         raise ValueError(

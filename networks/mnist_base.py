@@ -5,7 +5,6 @@ from networks.network import Network
 
 def createMnistBase(Convolution, Linear):
     class MnistBase(Network):
-
         def __init__(self, **kwargs) -> None:
 
             super().__init__()
@@ -15,7 +14,12 @@ def createMnistBase(Convolution, Linear):
                 Convolution(256, 256, 9, 2, **kwargs),
                 Convolution(256, 16, 4, 1, **kwargs),
                 torch.nn.Flatten(start_dim=1),  # type: ignore
-                Linear(3 * 3 * 16, 10, **kwargs),
+                Linear(
+                    3 * 3 * 16,
+                    10,
+                    uncertainty_placeholder=self,
+                    **kwargs
+                ),
             )
 
         def forward(self, x):

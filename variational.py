@@ -28,6 +28,7 @@ class VariationalBase(nn.Module):
         ] = 'mean',
         batch_norm_eps: float = 1e-3,
         batch_norm_momentum: float = 0.01,
+        uncertainty_placeholder=None,
     ) -> None:
 
         super().__init__()
@@ -37,6 +38,12 @@ class VariationalBase(nn.Module):
 
         self.means = means
         self.stds = stds
+
+        self.save_uncertainty = False
+
+        if uncertainty_placeholder is not None:
+            self.save_uncertainty = True
+            self.uncertainty_placeholder = uncertainty_placeholder
 
         if use_batch_norm:
 
@@ -102,6 +109,9 @@ class VariationalBase(nn.Module):
         means = self.means(x)
         stds = self.stds(x)
 
+        if self.save_uncertainty:
+            self.uncertainty_placeholder.uncertainty = stds
+
         result = torch.distributions.Normal(means, stds).rsample()
 
         if self.end_batch_norm is not None:
@@ -135,6 +145,7 @@ class VariationalConvolution(VariationalBase):
         batch_norm_eps: float = 1e-3,
         batch_norm_momentum: float = 0.01,
         bias=True,
+        uncertainty_placeholder=None,
         **kwargs,
     ) -> None:
 
@@ -168,6 +179,7 @@ class VariationalConvolution(VariationalBase):
             batch_norm_mode=batch_norm_mode,
             batch_norm_eps=batch_norm_eps,
             batch_norm_momentum=batch_norm_momentum,
+            uncertainty_placeholder=uncertainty_placeholder,
         )
 
 
@@ -192,6 +204,7 @@ class VariationalLinear(VariationalBase):
         batch_norm_eps: float = 1e-3,
         batch_norm_momentum: float = 0.01,
         bias=True,
+        uncertainty_placeholder=None,
         **kwargs,
     ) -> None:
 
@@ -217,4 +230,5 @@ class VariationalLinear(VariationalBase):
             batch_norm_mode=batch_norm_mode,
             batch_norm_eps=batch_norm_eps,
             batch_norm_momentum=batch_norm_momentum,
+            uncertainty_placeholder=uncertainty_placeholder,
         )
