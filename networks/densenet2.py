@@ -90,7 +90,10 @@ def createDenseNet2(Convolution, Linear):
 
             self.bn = nn.BatchNorm2d(num_planes)
             self.linear = Linear(
-                num_planes, nb_class, activation=torch.nn.ReLU()
+                num_planes,
+                nb_class,
+                activation=torch.nn.ReLU(),
+                uncertainty_placeholder=self,
             )
 
             self.initialize()

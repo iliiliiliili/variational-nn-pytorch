@@ -14,7 +14,7 @@ def createMnistMlp(Convolution, Linear):
                 torch.nn.Flatten(start_dim=1),  # type: ignore
                 Linear(28 * 28, 50, **kwargs),
                 Linear(50, 50, **kwargs),
-                Linear(50, 10, **kwargs),
+                Linear(50, 10, **kwargs, uncertainty_placeholder=self),
                 nn.LogSoftmax(1)
             )
 

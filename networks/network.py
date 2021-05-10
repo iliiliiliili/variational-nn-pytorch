@@ -94,6 +94,7 @@ class Network(nn.Module):
                 mean_std_metric.update(
                     self(params["input"]).detach().cpu().numpy()
                 )
+                print()
 
             return mean_std_metric.get()
 

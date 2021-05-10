@@ -1,3 +1,5 @@
+import math
+import numpy as np
 from typing import Dict
 
 
@@ -79,6 +81,31 @@ class MinMetric(Metric):
 
     def get(self):
         return min(self.value)
+
+    def update(self, value):
+        self.value.append(value)
+
+    def clear(self):
+        self.value = []
+
+
+class MeanStdMetric(Metric):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.value = []
+
+    def get(self, eps=1e-5):
+
+        mean = sum(self.value) / len(self.value)
+        mean_squares = sum([a**2 for a in self.value]) / len(self.value)
+
+        if isinstance(mean, np.ndarray):
+            std = np.sqrt(mean_squares - mean**2 + eps)
+        else:
+            std = math.sqrt(mean_squares - mean**2 + eps)
+
+        return (mean, std)
 
     def update(self, value):
         self.value.append(value)

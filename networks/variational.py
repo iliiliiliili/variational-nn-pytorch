@@ -138,7 +138,33 @@ class VariationalBase(nn.Module):
             stds = VariationalBase.GLOBAL_STD * stds
 
         if self.set_uncertainty is not None:
-            self.set_uncertainty(stds)
+
+            pstds = stds
+
+            if isinstance(stds, (int, float)):
+                pstds = torch.tensor(stds * 1.0)
+
+            self.set_uncertainty(pstds)
+
+        if self.LOG_STDS:
+
+            pstds = stds
+
+            if isinstance(stds, (int, float)):
+                pstds = torch.tensor(stds * 1.0)
+
+            print(
+                "std%:",
+                abs(
+                    float(torch.mean(pstds).detach())
+                    / float(torch.mean(means).detach())
+                    * 100
+                ),
+                "std:",
+                float(torch.mean(pstds).detach()),
+                "mean",
+                float(torch.mean(means).detach()),
+            )
 
         result = torch.distributions.Normal(means, stds).rsample()
 

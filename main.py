@@ -446,7 +446,6 @@ def run_evaluation_uncertainty(
         output = net(data)
         uncertainty = net.uncertainty()
         softmax_output = torch.nn.functional.softmax(output, -1)
-        softmax_uncertainty = torch.nn.functional.softmax(uncertainty, -1)
 
         monte_carlo_mean, monte_carlo_uncertainty = net.uncertainty(
             "monte-carlo", {"input": data}
@@ -462,7 +461,6 @@ def run_evaluation_uncertainty(
         print("output", output)
         print("uncertainty", uncertainty)
         print("softmax_output", softmax_output)
-        print("softmax_uncertainty", softmax_uncertainty)
         print()
         print("monte_carlo_mean", monte_carlo_mean)
         print("monte_carlo_uncertainty", monte_carlo_uncertainty)
