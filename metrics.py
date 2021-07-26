@@ -1,6 +1,9 @@
 import math
 import numpy as np
 from typing import Dict
+import torch
+
+from torch.functional import Tensor
 
 
 class Metric:
@@ -102,6 +105,8 @@ class MeanStdMetric(Metric):
 
         if isinstance(mean, np.ndarray):
             std = np.sqrt(mean_squares - mean**2 + eps)
+        elif isinstance(mean, Tensor):
+            std = torch.sqrt(mean_squares - mean**2 + eps)
         else:
             std = math.sqrt(mean_squares - mean**2 + eps)
 

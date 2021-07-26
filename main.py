@@ -94,7 +94,7 @@ def run_evaluation(
 
         t = time.time()
 
-        loss, correct = eval_step(  # type: ignore
+        loss_dict, correct = eval_step(  # type: ignore
             data, target, correct_count=correct_count
         )
 
@@ -117,7 +117,9 @@ def run_evaluation(
             + str(len(val))
             + "]"
             + " loss="
-            + str(loss)
+            + ", ".join(
+                [str(k) + "=" + str(loss_dict[k]) for k in loss_dict.keys()]
+            )
             + " acc="
             + str(accuracy_metric.get())
             + (
@@ -464,6 +466,11 @@ def run_evaluation_uncertainty(
         print()
         print("monte_carlo_mean", monte_carlo_mean)
         print("monte_carlo_uncertainty", monte_carlo_uncertainty)
+        print(
+            "(u/m) / (mu/mm): ",
+            (uncertainty / output).detach().numpy()
+            / (monte_carlo_uncertainty / monte_carlo_mean),
+        )
 
         print("-----")
 
@@ -701,6 +708,8 @@ def train(
     save_best=True,
     start_global_std: Optional[float] = None,
     end_global_std: Optional[float] = None,
+    train_uncertainty: bool = False,
+    monte_carlo_steps: int = 5,
     **kwargs,
 ):
 
@@ -726,7 +735,9 @@ def train(
 
     if optimizer is None:
         optimizer = "SGD"
-        kwargs["optimizer_lr"] = 0.001
+        kwargs["optimizer_lr"] = 0.001 / (
+            monte_carlo_steps if train_uncertainty else 1
+        )
         kwargs["optimizer_momentum"] = 0.9
 
     create_model_description(
@@ -804,9 +815,15 @@ def train(
                 target = target.to(device)
 
                 current_step += 1
-                loss, correct = net.train_step(
-                    data, target, correct_count=correct_count
-                )
+
+                if train_uncertainty:
+                    loss_dict, correct = net.train_step_uncertainty(
+                        data, target, correct_count=correct_count
+                    )
+                else:
+                    loss_dict, correct = net.train_step(
+                        data, target, correct_count=correct_count
+                    )
 
                 accuracy_metric.update(float(correct) / batch)
 
@@ -822,8 +839,12 @@ def train(
                     + "/"
                     + str(len(train))
                     + "]"
-                    + " loss="
-                    + str(loss)
+                    + ", ".join(
+                        [
+                            str(k) + "=" + str(loss_dict[k])
+                            for k in loss_dict.keys()
+                        ]
+                    )
                     + " acc="
                     + str(accuracy_metric.get())
                 )
@@ -866,8 +887,12 @@ def train(
                     if best_description is None:
                         is_should_save_best = True
                     else:
-                        is_should_save_best = (
-                            best_description["result"] * 1.001 < val_acc
+                        is_should_save_best = best_description[
+                            "result"
+                        ] * 1.001 < (
+                            val_acc[0]
+                            if isinstance(val_acc, tuple)
+                            else val_acc
                         )
 
                     if is_should_save_best and save_best:
@@ -878,7 +903,11 @@ def train(
                         data = {
                             "epoch": epoch + 1,
                             "batch": batch,
-                            "result": val_acc,
+                            "result": (
+                                val_acc[0]
+                                if isinstance(val_acc, tuple)
+                                else val_acc
+                            ),
                         }
 
                         with open(
