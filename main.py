@@ -26,6 +26,7 @@ from params import (
     optimizers,
 )
 import time
+from tensorboardX import SummaryWriter
 
 
 def create_train_validation_test(params):
@@ -461,8 +462,8 @@ def run_evaluation_uncertainty(
             else "(wrong output)",
         )
         print("output", output)
-        print("uncertainty", uncertainty)
         print("softmax_output", softmax_output)
+        print("uncertainty", uncertainty)
         print()
         print("monte_carlo_mean", monte_carlo_mean)
         print("monte_carlo_uncertainty", monte_carlo_uncertainty)
@@ -471,7 +472,7 @@ def run_evaluation_uncertainty(
             (uncertainty / output).detach().numpy()
             / (monte_carlo_uncertainty / monte_carlo_mean),
         )
-
+        print()
         print("-----")
 
     return None
@@ -732,6 +733,10 @@ def train(
         os.mkdir(model_path + "/results")
     if not os.path.exists(model_path + "/best"):
         os.mkdir(model_path + "/best")
+    if not os.path.exists(model_path + "/summary"):
+        os.mkdir(model_path + "/summary")
+
+    writer = SummaryWriter(model_path + "/summary")
 
     if optimizer is None:
         optimizer = "SGD"
@@ -849,8 +854,17 @@ def train(
                     + str(accuracy_metric.get())
                 )
 
+                for loss, value in loss_dict.items():
+                    writer.add_scalar(loss, value, current_step)
+
+                writer.add_scalar("acc", accuracy_metric.get(), current_step)
+                writer.add_scalar("epoch", epoch + 1, current_step)
+
                 if start_global_std is not None:
                     log += " g_std=" + str(VariationalBase.GLOBAL_STD)
+                    writer.add_scalar(
+                        "Global_STD", VariationalBase.GLOBAL_STD, current_step
+                    )
 
                 print("{:<80}".format(log), end="\n")
 
@@ -868,6 +882,16 @@ def train(
                         text = "step " + str(current_step) + ": "
 
                     text += str(val_acc)
+
+                    writer.add_scalar(
+                        "val_acc",
+                        (
+                            val_acc[0]
+                            if isinstance(val_acc, tuple)
+                            else val_acc
+                        ),
+                        current_step,
+                    )
 
                     with open(
                         model_path
