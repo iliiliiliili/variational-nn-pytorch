@@ -56,8 +56,9 @@ class VariationalBase(nn.Module):
         self.global_std_mode = global_std_mode
 
         self.set_uncertainty = None
+        self.is_uncertainty_layer = uncertainty_placeholder is not None
 
-        if uncertainty_placeholder is not None:
+        if self.is_uncertainty_layer:
 
             def set_uncertainty(value):
                 uncertainty_placeholder.uncertainty_value = value
@@ -137,7 +138,7 @@ class VariationalBase(nn.Module):
         elif self.global_std_mode == "multiply":
             stds = VariationalBase.GLOBAL_STD * stds
 
-        if self.set_uncertainty is not None:
+        if self.is_uncertainty_layer:
 
             pstds = stds
 
@@ -166,6 +167,10 @@ class VariationalBase(nn.Module):
                 float(torch.mean(means).detach()),
             )
 
+        # if self.is_uncertainty_layer:
+        #     result = means
+        # else:
+        #     result = torch.distributions.Normal(means, stds).rsample()
         result = torch.distributions.Normal(means, stds).rsample()
 
         if self.end_batch_norm is not None:

@@ -13,14 +13,16 @@ class Network(nn.Module):
         super().__init__()
 
     def prepare_train(
-        self, optimizer, optimizer_params,
+        self,
+        optimizer,
+        optimizer_params,
         loss_func=nn.CrossEntropyLoss(),
-        uncertainty_loss_func=nn.MSELoss(),
+        monte_carlo_loss_func=nn.MSELoss(),
     ):
 
         self.optimizer = optimizer(self.parameters(), **optimizer_params)
         self.loss_func = loss_func
-        self.uncertainty_loss_func = uncertainty_loss_func
+        self.monte_carlo_loss_func = monte_carlo_loss_func
 
     def train_step(
         self,
@@ -60,13 +62,15 @@ class Network(nn.Module):
             Callable[[torch.Tensor, torch.Tensor], int]
         ] = None,
         clip_grad: Optional[float] = None,
-        monte_carlo_steps: int = 5,
-        uncertainty_loss_weight: float = 0.2,
+        monte_carlo_steps: int = 10,
+        uncertainty_monte_carlo_loss_weight: float = 0.4,
+        # mean_monte_carlo_loss_weight: float = 0.2,
+        eps: float = 1e-5,
     ):
 
         mean_losses: List[Tensor] = []
-        mean_std_outputs = MeanStdMetric()
-        mean_uncertainty = AverageMetric()
+        mean_std_outputs_metric = MeanStdMetric()
+        mean_uncertainty_metric = AverageMetric()
 
         correctness = None
 
@@ -78,20 +82,27 @@ class Network(nn.Module):
                 correctness = correct_count(output, target)
 
             mean_losses.append(loss)
-            mean_std_outputs.update(output)
-            mean_uncertainty.update(
-                self.uncertainty(method="uncertainty_layer")
+            mean_std_outputs_metric.update(output)
+            mean_uncertainty_metric.update(
+                self.uncertainty(method="uncertainty_layer")  # / (output + eps)
             )
 
-        monte_carlo_uncertainty = mean_std_outputs.get()[1]
-        uncertainty_loss = self.uncertainty_loss_func(
-            mean_uncertainty.get(), monte_carlo_uncertainty
+        (
+            monte_carlo_mean,
+            monte_carlo_uncertainty,
+        ) = mean_std_outputs_metric.get()
+        uncertainty_monte_carlo_loss = self.monte_carlo_loss_func(
+            mean_uncertainty_metric.get(),
+            monte_carlo_uncertainty  # / (monte_carlo_mean + eps),
         )
+        # mean_monte_carlo_loss = self.monte_carlo_loss_func(
+        #     mean_uncertainty_metric.get(), monte_carlo_uncertainty
+        # )
 
         mean_loss = sum(mean_losses) / monte_carlo_steps
 
         loss = (
-            uncertainty_loss * uncertainty_loss_weight
+            uncertainty_monte_carlo_loss * uncertainty_monte_carlo_loss_weight
             + mean_loss
         )
 
@@ -106,7 +117,7 @@ class Network(nn.Module):
         loss_dict = {
             "loss": loss.item(),
             "mean_loss": mean_loss.item(),
-            "uncertainty_loss": uncertainty_loss.item(),
+            "uncertainty_monte_carlo_loss": uncertainty_monte_carlo_loss.item(),
         }
 
         if correctness is None:
