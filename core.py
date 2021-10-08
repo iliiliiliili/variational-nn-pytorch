@@ -1,10 +1,28 @@
 from typing import Callable, Dict, List, TypeVar, Union
 from inspect import signature
+import torch
+from torch import flatten, nn
 
 
 T1 = TypeVar('T1')
 T2 = TypeVar('T2')
 T3 = TypeVar('T3')
+
+
+class Flatten(nn.Module):
+
+    def __init__(self, start_dim) -> None:
+        super().__init__()
+        self.flatten = torch.nn.Flatten(start_dim=start_dim)
+
+    def forward(self, input):
+
+        if isinstance(input, tuple):
+            result = tuple(self.flatten(x) for x in input)
+        else:
+            result = self.flatten(input)
+
+        return result
 
 
 def rename_dict(dict: dict, func: Callable[[str], str]):

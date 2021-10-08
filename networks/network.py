@@ -62,7 +62,7 @@ class Network(nn.Module):
             Callable[[torch.Tensor, torch.Tensor], int]
         ] = None,
         clip_grad: Optional[float] = None,
-        monte_carlo_steps: int = 10,
+        monte_carlo_steps: int = 5,
         uncertainty_monte_carlo_loss_weight: float = 0.4,
         # mean_monte_carlo_loss_weight: float = 0.2,
         eps: float = 1e-5,
@@ -180,7 +180,6 @@ class Network(nn.Module):
                 mean_std_metric.update(
                     self(params["input"]).detach().cpu().numpy()
                 )
-                print()
 
             return mean_std_metric.get()
 

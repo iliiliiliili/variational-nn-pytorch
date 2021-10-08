@@ -1,6 +1,6 @@
 from torch import nn
-import torch
 from networks.network import Network
+from core import Flatten
 
 
 def createMnistBase(Convolution, Linear):
@@ -13,7 +13,7 @@ def createMnistBase(Convolution, Linear):
                 Convolution(1, 256, 9, 1, **kwargs),
                 Convolution(256, 256, 9, 2, **kwargs),
                 Convolution(256, 16, 4, 1, **kwargs),
-                torch.nn.Flatten(start_dim=1),  # type: ignore
+                Flatten(start_dim=1),  # type: ignore
                 Linear(
                     3 * 3 * 16,
                     10,

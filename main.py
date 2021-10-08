@@ -429,7 +429,7 @@ def evaluate(
 
 
 def run_evaluation_uncertainty(
-    net: Network, val, device, correct_count, batch, eval_step=None
+    net: Network, val, device, correct_count, batch, eval_step=None, std_range=2,
 ):
 
     if eval_step is None:
@@ -439,7 +439,11 @@ def run_evaluation_uncertainty(
 
     net.eval()
     VariationalBase.GLOBAL_STD = 0
-    VariationalBase.LOG_STDS = True
+    # VariationalBase.LOG_STDS = True
+
+    correct_count = 0
+    total_count = 0
+    tp, tn, fp, fn = 0, 0, 0, 0
 
     for i, (data, target) in enumerate(val):
 
@@ -454,28 +458,68 @@ def run_evaluation_uncertainty(
             "monte-carlo", {"input": data}
         )
 
-        print(
-            "target",
-            target,
-            "(correct output)"
-            if correct_count(output, target) > 0
-            else "(wrong output)",
-        )
-        print("output", output)
-        print("softmax_output", softmax_output)
-        print("uncertainty", uncertainty)
-        print()
-        print("monte_carlo_mean", monte_carlo_mean)
-        print("monte_carlo_uncertainty", monte_carlo_uncertainty)
-        print(
-            "(u/m) / (mu/mm): ",
-            (uncertainty / output).detach().numpy()
-            / (monte_carlo_uncertainty / monte_carlo_mean),
-        )
-        print()
-        print("-----")
+        monte_carlo_mean = torch.tensor(monte_carlo_mean)
+        monte_carlo_uncertainty = torch.tensor(monte_carlo_uncertainty)
 
-    return None
+        mx, mxi = torch.max(output, axis=-1)
+        uncertain_output = output + std_range * uncertainty
+        uncertain_output[0, mxi] = mx - uncertainty[0, mxi]
+        is_certain = torch.max(uncertain_output, axis=-1)[1] == mxi
+
+        mx_mc, mxi_mc = torch.max(monte_carlo_mean, axis=-1)
+        uncertain_output_mc = monte_carlo_mean + monte_carlo_uncertainty
+        uncertain_output_mc[0, mxi_mc] = (
+            mx_mc - std_range * monte_carlo_uncertainty[0, mxi_mc]
+        )
+        is_certain_mc = torch.max(uncertain_output_mc, axis=-1)[1] == mxi_mc
+
+        is_correct = is_certain == is_certain_mc
+
+        if is_correct:
+            correct_count += 1
+
+        if is_certain:
+            if is_certain_mc:
+                tp += 1
+            else:
+                fp += 1
+        else:
+            if is_certain_mc:
+                fn += 1
+            else:
+                tn += 1
+
+        total_count += 1
+
+        # print(
+        #     "target",
+        #     target,
+        #     "(correct output)"
+        #     if correct_count(output, target) > 0
+        #     else "(wrong output)",
+        # )
+        # print("is_certain", is_certain)
+        # print("is_certain_mc", is_certain_mc)
+
+        # print("output", output)
+        # print("softmax_output", softmax_output)
+        # print("uncertainty", uncertainty)
+        # print()
+        # print("monte_carlo_mean", monte_carlo_mean)
+        # print("monte_carlo_uncertainty", monte_carlo_uncertainty)
+        # print(
+        #     "(u/m) / (mu/mm): ",
+        #     (uncertainty / output).detach().numpy()
+        #     / (monte_carlo_uncertainty / monte_carlo_mean),
+        # )
+        # print()
+        print(
+            "\rcorrect:", correct_count / total_count,
+            "tp:", tp, "tn:", tn,
+            "fp:", fp, "fn:", fn,
+        )
+
+    return correct_count / total_count
 
 
 def evaluate_uncertainty(
