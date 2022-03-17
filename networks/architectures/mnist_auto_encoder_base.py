@@ -1,7 +1,7 @@
 from core import filter_out_dict
 from torch import nn
 import torch
-from networks.auto_encoder_network import AutoEncoderNetwork
+from networks.architectures.auto_encoder_network import AutoEncoderNetwork
 
 
 class Reshape(nn.Module):

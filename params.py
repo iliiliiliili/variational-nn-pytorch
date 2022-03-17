@@ -13,13 +13,13 @@ from networks.single_std_variational import (
     SingleStdVariationalConvolution, SingleStdVariationalLinear,
 )
 
-from networks.cifar10_mini_base import createCifar10MiniBase
-from networks.mnist_mlp import createMnistMlp
-from networks.mnist_double_linear import createMnistDoubleLinear
-from networks.mnist_mini2_base import createMnistMini2Base
-from networks.mnist_mini_base import createMnistMiniBase
-from networks.mnist_auto_encoder_base import createMnistAutoEncoderBase
-from networks.vgg import createVGG
+from networks.architectures.cifar10_mini_base import createCifar10MiniBase
+from networks.architectures.mnist_mlp import createMnistMlp
+from networks.architectures.mnist_double_linear import createMnistDoubleLinear
+from networks.architectures.mnist_mini2_base import createMnistMini2Base
+from networks.architectures.mnist_mini_base import createMnistMiniBase
+from networks.architectures.mnist_auto_encoder_base import createMnistAutoEncoderBase
+from networks.architectures.vgg import createVGG
 from networks.variational import (
     VariationalConvolution,
     VariationalLinear,
@@ -30,16 +30,16 @@ import torch
 from torchvision import datasets
 from torchvision import transforms
 
-from networks.mnist_base import createMnistBase
-from networks.cifar10_base import createCifar10Base
-from networks.resnet import createResnet
+from networks.architectures.mnist_base import createMnistBase
+from networks.architectures.cifar10_base import createCifar10Base
+from networks.architectures.resnet import createResnet
 
-from networks import densenet_pure
-from networks import densenet1
-from networks import densenet2
+from networks.architectures import densenet_pure
+from networks.architectures import densenet1
+from networks.architectures import densenet2
 
-from networks import resnet_pure
-from networks import vgg_pure
+from networks.architectures import resnet_pure
+from networks.architectures import vgg_pure
 
 
 SEED = 2605
