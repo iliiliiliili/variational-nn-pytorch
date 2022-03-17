@@ -1,0 +1,13 @@
+name: vnn
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - pip:
+    - fire==0.4.0
+    - protobuf==3.19.4
+    - scipy==1.5.0
+    - tensorboardx==2.5
+    - termcolor==1.1.0
+    - torchattacks==3.2.4
+prefix: /home/io/miniconda3/envs/vnn
