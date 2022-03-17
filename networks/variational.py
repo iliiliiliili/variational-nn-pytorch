@@ -1,6 +1,7 @@
 from typing import Any, List, Optional, Literal, Tuple, Union
 import torch
 from torch import nn
+import numpy as np
 
 
 class VariationalBase(nn.Module):
@@ -189,7 +190,8 @@ class VariationalBase(nn.Module):
         #     result = means
         # else:
         #     result = torch.distributions.Normal(means, stds).rsample()
-        result = torch.distributions.Normal(means, stds).rsample()
+        # result = torch.distributions.Normal(means, stds.abs() + 1e-40).rsample()
+        result = means + stds * torch.normal(0, torch.ones_like(stds))
 
         if self.end_batch_norm is not None:
             result = self.end_batch_norm(result)
