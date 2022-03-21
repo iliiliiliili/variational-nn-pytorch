@@ -17,7 +17,6 @@ def createMnistBase(Convolution, Linear):
                 Linear(
                     3 * 3 * 16,
                     10,
-                    uncertainty_placeholder=self,
                     **kwargs
                 ),
             )

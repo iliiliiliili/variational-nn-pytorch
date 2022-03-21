@@ -93,7 +93,6 @@ def createDenseNet2(Convolution, Linear):
                 num_planes,
                 nb_class,
                 activation=torch.nn.ReLU(),
-                uncertainty_placeholder=self,
             )
 
             self.initialize()

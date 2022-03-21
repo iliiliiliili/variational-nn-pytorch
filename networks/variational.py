@@ -44,7 +44,6 @@ class VariationalBase(nn.Module):
         global_std_mode: Union[
             Literal["none"], Literal["replace"], Literal["multiply"]
         ] = "none",
-        uncertainty_placeholder=None,
     ) -> None:
 
         super().__init__()
@@ -57,16 +56,6 @@ class VariationalBase(nn.Module):
         self.nstds = nstds
 
         self.global_std_mode = global_std_mode
-
-        self.set_uncertainty = None
-        self.is_uncertainty_layer = uncertainty_placeholder is not None
-
-        if self.is_uncertainty_layer:
-
-            def set_uncertainty(value):
-                uncertainty_placeholder.uncertainty_value = value
-
-            self.set_uncertainty = set_uncertainty
 
         if use_batch_norm:
 
@@ -330,7 +319,6 @@ class VariationalLinear(VariationalBase):
             Literal["none"], Literal["replace"], Literal["multiply"]
         ] = "none",
         bias=True,
-        uncertainty_placeholder=None,
         uncertainty_type: Union[
             Literal["branch"], Literal["last_layer"]
         ] = "last_layer",
@@ -370,7 +358,6 @@ class VariationalLinear(VariationalBase):
             batch_norm_eps=batch_norm_eps,
             batch_norm_momentum=batch_norm_momentum,
             global_std_mode=global_std_mode,
-            uncertainty_placeholder=uncertainty_placeholder,
         )
 
 
@@ -407,7 +394,6 @@ class VariationalConvolutionTranspose(VariationalBase):
             Literal["none"], Literal["replace"], Literal["multiply"]
         ] = "none",
         bias=True,
-        uncertainty_placeholder=None,
         **kwargs,
     ) -> None:
 
@@ -459,5 +445,4 @@ class VariationalConvolutionTranspose(VariationalBase):
             batch_norm_eps=batch_norm_eps,
             batch_norm_momentum=batch_norm_momentum,
             global_std_mode=global_std_mode,
-            uncertainty_placeholder=uncertainty_placeholder,
         )

@@ -9,7 +9,6 @@ from metrics import MeanStdMetric, AverageMetric
 
 class Network(nn.Module):
     def __init__(self) -> None:
-        self.uncertainty_value = None
         super().__init__()
 
     def prepare_train(
@@ -163,14 +162,9 @@ class Network(nn.Module):
             torch.load(load_path + "/model.pth", map_location=device)
         )
 
-    def uncertainty(self, method="uncertainty_layer", params=None):
+    def uncertainty(self, method="monte-carlo", params=None):
 
-        if (
-            method == "uncertainty_layer"
-            and self.uncertainty_value is not None
-        ):
-            return self.uncertainty_value
-        elif method == "monte-carlo":
+        if method == "monte-carlo":
             if "repeats" not in params:
                 params["repeats"] = 10
 
