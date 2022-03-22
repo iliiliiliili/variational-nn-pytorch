@@ -1,9 +1,11 @@
+from losses import gaussian_regression_loss
 from networks.const_mean_variational import (
     OneMeanVariationalConvolution,
     OneMeanVariationalLinear,
     ZeroMeanVariationalConvolution,
     ZeroMeanVariationalLinear,
 )
+from networks.ensemble import create_ensemble
 from networks.single_mean_variational import (
     SingleMeanVariationalConvolution,
     SingleMeanVariationalLinear,
@@ -284,8 +286,8 @@ dataset_params = {
     },
 }
 
-
 networks = {
+    "mnist_base_ensemble": lambda *args, **kwargs: create_ensemble(createMnistBase(ClassicConvolution, ClassicLinear), *args, **kwargs),
     "mnist_base_vnn": createMnistBase(
         VariationalConvolution, VariationalLinear
     ),
@@ -441,9 +443,17 @@ networks = {
 }
 
 loss_functions = {
-    "cross_entropy": torch.nn.CrossEntropyLoss(),
-    "mse": torch.nn.MSELoss(),
-    "bce": torch.nn.BCELoss(),
+    "cross_entropy": torch.nn.CrossEntropyLoss,
+    "gaussian_regression_loss": gaussian_regression_loss,
+    "mse": torch.nn.MSELoss,
+    "bce": torch.nn.BCELoss,
+}
+
+loss_params = {
+    "cross_entropy": [],
+    "gaussian_regression_loss": ["noise_std"],
+    "mse": [],
+    "bce": [],
 }
 
 activations = {
