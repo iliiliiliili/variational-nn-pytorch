@@ -20,6 +20,7 @@ from params import (
     dataset_params,
     networks,
     loss_functions,
+    loss_params,
     activations,
     activation_params,
     optimizer_params,
@@ -222,7 +223,7 @@ def evaluate(
             "epochs",
             "save_steps",
             "validation_steps",
-            "loss_function_name",
+            "loss",
             "device",
             "save_best",
             "start_global_std",
@@ -588,7 +589,7 @@ def evaluate_uncertainty(
             "epochs",
             "save_steps",
             "validation_steps",
-            "loss_function_name",
+            "loss",
             "device",
             "save_best",
             "start_global_std",
@@ -738,6 +739,24 @@ def process_optimizer_kwargs(optimizer_name, kwargs):
     return kwargs, current_optimizer_params
 
 
+def process_loss_kwargs(loss_name, kwargs):
+
+    loss_kwargs, kwargs = give(
+        kwargs,
+        list(  # type: ignore
+            map(lambda a: "loss_" + a, loss_params[loss_name])
+        ),
+    )
+
+    current_loss_params = rename_dict(
+        loss_kwargs, lambda name: name.replace("loss_", ""),
+    )
+
+    current_loss_params
+
+    return kwargs, current_loss_params
+
+
 def train(
     network_name,
     dataset_name,
@@ -748,7 +767,7 @@ def train(
     save_steps=-1,
     validation_steps=-1,
     optimizer=None,
-    loss_function_name="cross_entropy",
+    loss="cross_entropy",
     device="cuda:0",
     save_best=True,
     start_global_std: Optional[float] = None,
@@ -800,7 +819,7 @@ def train(
         save_steps=save_steps,
         validation_steps=validation_steps,
         optimizer=optimizer,
-        loss_function_name=loss_function_name,
+        loss=loss,
         device=device,
         save_best=save_best,
         start_global_std=start_global_std,
@@ -813,6 +832,10 @@ def train(
 
     kwargs, current_optimizer_params = process_optimizer_kwargs(
         optimizer, kwargs
+    )
+
+    kwargs, current_loss_params = process_loss_kwargs(
+        loss, kwargs
     )
 
     device = torch.device(device if torch.cuda.is_available() else "cpu")
@@ -838,7 +861,7 @@ def train(
     net.prepare_train(
         optimizer=optimizers[optimizer],
         optimizer_params=current_optimizer_params,
-        loss_func=loss_functions[loss_function_name],
+        loss_func=loss_functions[loss](**current_loss_params),
     )
     net.to(device)
 
