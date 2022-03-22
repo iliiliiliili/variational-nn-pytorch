@@ -16,7 +16,6 @@ class VariationalBase(nn.Module):
         self,
         means: nn.Module,
         stds: Any,
-        nstds: Any,
         batch_norm_module: Any,
         batch_norm_size: int,
         activation: Optional[Union[nn.Module, List[nn.Module]]] = None,
@@ -53,7 +52,6 @@ class VariationalBase(nn.Module):
 
         self.means = means
         self.stds = stds
-        self.nstds = nstds
 
         self.global_std_mode = global_std_mode
 
@@ -134,26 +132,10 @@ class VariationalBase(nn.Module):
         else:
             stds = 0
 
-        if self.nstds:
-            nstds = self.nstds(nstd_x) + stds
-        else:
-            nstds = None
-
         if self.global_std_mode == "replace":
             stds = VariationalBase.GLOBAL_STD
         elif self.global_std_mode == "multiply":
             stds = VariationalBase.GLOBAL_STD * stds
-
-        if self.is_uncertainty_layer:
-
-            pstds = stds if nstds is None else nstds
-
-            if isinstance(stds, (int, float)):
-                pstds = torch.tensor(stds * 1.0)
-
-            self.set_uncertainty(pstds)
-
-            nstds = None
 
         if self.LOG_STDS:
 
@@ -180,16 +162,13 @@ class VariationalBase(nn.Module):
         # else:
         #     result = torch.distributions.Normal(means, stds).rsample()
         # result = torch.distributions.Normal(means, stds.abs() + 1e-40).rsample()
-        result = means + stds * torch.normal(0, torch.ones_like(stds))
+        result = means + stds * torch.normal(torch.zeros_like(means), 1)
 
         if self.end_batch_norm is not None:
             result = self.end_batch_norm(result)
 
         if self.end_activation is not None:
             result = self.end_activation(result)
-
-        if nstds is not None:
-            result = (result, nstds)
 
         return result
 
@@ -227,9 +206,6 @@ class VariationalConvolution(VariationalBase):
             Literal["none"], Literal["replace"], Literal["multiply"]
         ] = "none",
         bias=True,
-        uncertainty_type: Union[
-            Literal["branch"], Literal["last_layer"]
-        ] = "last_layer",
         **kwargs,
     ) -> None:
 
@@ -249,7 +225,6 @@ class VariationalConvolution(VariationalBase):
 
         if global_std_mode == "replace":
             stds = None
-            nstds = None
         else:
             stds = nn.Conv2d(
                 in_channels=in_channels,
@@ -260,22 +235,9 @@ class VariationalConvolution(VariationalBase):
                 **kwargs,
             )
 
-            if uncertainty_type == "branch":
-                nstds = nn.Conv2d(
-                    in_channels=in_channels,
-                    out_channels=out_channels,
-                    kernel_size=kernel_size,
-                    stride=stride,
-                    bias=bias,
-                    **kwargs,
-                )
-            else:
-                nstds = None
-
         super().build(
             means,
             stds,
-            nstds,
             nn.BatchNorm2d,
             out_channels,
             activation=activation,
@@ -319,9 +281,6 @@ class VariationalLinear(VariationalBase):
             Literal["none"], Literal["replace"], Literal["multiply"]
         ] = "none",
         bias=True,
-        uncertainty_type: Union[
-            Literal["branch"], Literal["last_layer"]
-        ] = "last_layer",
         **kwargs,
     ) -> None:
 
@@ -334,21 +293,12 @@ class VariationalLinear(VariationalBase):
 
         if global_std_mode == "replace":
             stds = None
-            nstds = None
         else:
             stds = nn.Linear(in_features, out_features, bias=bias, **kwargs)
-
-            if uncertainty_type == "branch":
-                nstds = nn.Linear(
-                    in_features, out_features, bias=bias, **kwargs
-                )
-            else:
-                nstds = None
 
         super().build(
             means,
             stds,
-            nstds,
             nn.BatchNorm1d,
             out_features,
             activation=activation,
