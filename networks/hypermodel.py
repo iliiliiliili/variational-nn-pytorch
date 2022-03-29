@@ -14,12 +14,13 @@ def get_shapes(network: Network):
     
 
 class HypermodelNetwork(Network):
-    def __init__(self, base, hypertorso_creator, index_dim) -> None:
+    def __init__(self, base, hypertorso_creator, index_dim, index_scale=0) -> None:
         super().__init__()
         self.base = base
 
         self.intialize_shapes()
         self.index_dim = self.total_size if index_dim is None else index_dim
+        self.index_scale = index_scale
 
         self.hypertorso = hypertorso_creator(index_dim, self.total_size, self.shapes)
 
@@ -44,19 +45,26 @@ class HypermodelNetwork(Network):
         return result
     
     def create_hyperweights(self, device):
-        def singe_prior_index(shape):
-            return torch.normal(0, torch.ones(shape, device=device))
+        def singe_prior_index(shape, index_scale=0):
+            result = torch.normal(0, torch.ones(shape, device=device))
 
-        flat_index = singe_prior_index(self.index_dim)
-        weights = self.hypertorso(flat_index)
+            if index_scale > 0:
+                result *= index_scale / np.sqrt(np.prod(shape))
+            
+            return result
+
+        # flat_index = singe_prior_index(self.index_dim)
+        shaped_index = [[singe_prior_index(x, self.index_scale) for x in sub_shapes] for sub_shapes in self.shapes]
+
+        weights = self.hypertorso(shaped_index)
 
         return weights
 
 
-def create_hypermodel(network_creator, hypertorso_creator, index_dim, **kwargs):
+def create_hypermodel(network_creator, hypertorso_creator, index_dim, index_scale, **kwargs):
     base = network_creator(**kwargs)
 
-    result = HypermodelNetwork(base, hypertorso_creator, index_dim)
+    result = HypermodelNetwork(base, hypertorso_creator, index_dim, index_scale)
 
     return result
 
@@ -69,10 +77,10 @@ def create_linear_hypermodel(network_creator, index_dim, **kwargs):
     return result
 
 
-def create_bbb_hypermodel(network_creator, **kwargs):
+def create_bbb_hypermodel(network_creator, index_scale=1, **kwargs):
     hypertorso_creator = lambda _, total_parameters, shapes: DiagonalLinearHypertorso(total_parameters, shapes)
 
-    result = create_hypermodel(network_creator, hypertorso_creator, None, **kwargs)
+    result = create_hypermodel(network_creator, hypertorso_creator, None, index_scale=index_scale, **kwargs)
 
     return result
 
@@ -255,12 +263,12 @@ class DiagonalLinearHypertorso(nn.Module):
         self.shapes = shapes
         self.flat_shapes = [[np.prod(x) for x in sub_shapes] for sub_shapes in shapes]
     
-    def forward(self, x):
+    def forward(self, shaped_x):
 
-        shaped_x = split_by_arrays(x, self.flat_shapes)
+        # shaped_x = split_by_arrays(x, self.flat_shapes)
         # result = [[w for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
-        result = [[w * x.reshape(w.shape) for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
-        # result = [[torch.log1p(torch.exp(w)) * x.reshape(w.shape) for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
+        # result = [[w * x.reshape(w.shape) for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
+        result = [[torch.log(1 + torch.exp(w)) * x.reshape(w.shape) for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
 
         if self.use_bias:
             result = [[h + b for h, b in zip(layer_result, layer_bs)] for layer_result, layer_bs in zip(result, self.bs)]
