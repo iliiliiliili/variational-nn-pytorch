@@ -20,6 +20,7 @@ from params import (
     dataset_params,
     networks,
     loss_functions,
+    loss_functions_that_use_network,
     loss_params,
     activations,
     activation_params,
@@ -72,9 +73,7 @@ def correct_count(output, target):
     return labels.eq(target.data.view_as(labels)).sum()
 
 
-def run_evaluation(
-    net: Network, val, device, correct_count, batch, eval_step=None
-):
+def run_evaluation(net: Network, val, device, correct_count, batch, eval_step=None):
 
     if eval_step is None:
         eval_step = net.eval_step
@@ -119,9 +118,7 @@ def run_evaluation(
             + str(len(val))
             + "]"
             + " loss="
-            + ", ".join(
-                [str(k) + "=" + str(loss_dict[k]) for k in loss_dict.keys()]
-            )
+            + ", ".join([str(k) + "=" + str(loss_dict[k]) for k in loss_dict.keys()])
             + " acc="
             + str(accuracy_metric.get())
             + (
@@ -273,20 +270,14 @@ def evaluate(
 
     if evaluation_type == "normal":
 
-        train, val, test = create_train_validation_test(
-            dataset_params[dataset_name]
-        )
+        train, val, test = create_train_validation_test(dataset_params[dataset_name])
 
-        current_dataset = {"train": train, "validation": val, "test": test}[
-            split
-        ]
+        current_dataset = {"train": train, "validation": val, "test": test}[split]
         current_dataset = torch.utils.data.DataLoader(  # type: ignore
             current_dataset, batch, shuffle=False, num_workers=4
         )
 
-        result, fps = run_evaluation(
-            net, current_dataset, device, correct_count, batch
-        )
+        result, fps = run_evaluation(net, current_dataset, device, correct_count, batch)
     elif evaluation_type in [
         "gaussian",
         "uniform",
@@ -296,21 +287,13 @@ def evaluate(
     ]:
 
         def evaluate_current(current_dataset_params):
-            train, val, test = create_train_validation_test(
-                current_dataset_params
-            )
-            current_dataset = {
-                "train": train,
-                "validation": val,
-                "test": test,
-            }[split]
+            train, val, test = create_train_validation_test(current_dataset_params)
+            current_dataset = {"train": train, "validation": val, "test": test,}[split]
             current_dataset = torch.utils.data.DataLoader(  # type: ignore
                 current_dataset, batch, shuffle=False, num_workers=0
             )
 
-            return run_evaluation(
-                net, current_dataset, device, correct_count, batch
-            )
+            return run_evaluation(net, current_dataset, device, correct_count, batch)
 
         result = {
             "gaussian": evaluate_gaussian,
@@ -337,14 +320,8 @@ def evaluate(
                 return (input - mean) / std
 
         def evaluate_current(current_dataset_params, attack):
-            train, val, test = create_train_validation_test(
-                current_dataset_params
-            )
-            current_dataset = {
-                "train": train,
-                "validation": val,
-                "test": test,
-            }[split]
+            train, val, test = create_train_validation_test(current_dataset_params)
+            current_dataset = {"train": train, "validation": val, "test": test,}[split]
             current_dataset = torch.utils.data.DataLoader(  # type: ignore
                 current_dataset, batch, shuffle=False, num_workers=0
             )
@@ -352,8 +329,7 @@ def evaluate(
             if "mean" in current_dataset_params:
                 normalized_net = torch.nn.Sequential(
                     Normalize(
-                        current_dataset_params["mean"],
-                        current_dataset_params["std"],
+                        current_dataset_params["mean"], current_dataset_params["std"],
                     ),
                     net,
                     torch.nn.Softmax(-1),
@@ -398,17 +374,10 @@ def evaluate(
             attack_types, net, evaluate_current, dataset_name, **kwargs,
         )
     else:
-        raise ValueError(
-            "evaluation_type '" + evaluation_type + "' is unknown"
-        )
+        raise ValueError("evaluation_type '" + evaluation_type + "' is unknown")
 
     print(
-        'Evaluation on "'
-        + evaluation_type
-        + "_"
-        + split
-        + '" result: '
-        + str(result)
+        'Evaluation on "' + evaluation_type + "_" + split + '" result: ' + str(result)
     )
 
     if not os.path.exists(model_path + "/results"):
@@ -416,13 +385,7 @@ def evaluate(
 
     if save:
         with open(
-            model_path
-            + "/results/eval_"
-            + evaluation_type
-            + "_"
-            + split
-            + ".txt",
-            "w",
+            model_path + "/results/eval_" + evaluation_type + "_" + split + ".txt", "w",
         ) as f:
             f.write(str(result) + "\n")
 
@@ -515,9 +478,16 @@ def run_evaluation_uncertainty(
         # )
         # print()
         print(
-            "\rcorrect:", correct_count / total_count,
-            "tp:", tp, "tn:", tn,
-            "fp:", fp, "fn:", fn,
+            "\rcorrect:",
+            correct_count / total_count,
+            "tp:",
+            tp,
+            "tn:",
+            tn,
+            "fp:",
+            fp,
+            "fn:",
+            fn,
         )
 
     return correct_count / total_count
@@ -638,13 +608,9 @@ def evaluate_uncertainty(
 
     if evaluation_type == "monte-carlo-vs-single":
 
-        train, val, test = create_train_validation_test(
-            dataset_params[dataset_name]
-        )
+        train, val, test = create_train_validation_test(dataset_params[dataset_name])
 
-        current_dataset = {"train": train, "validation": val, "test": test}[
-            split
-        ]
+        current_dataset = {"train": train, "validation": val, "test": test}[split]
         current_dataset = torch.utils.data.DataLoader(  # type: ignore
             current_dataset, batch, shuffle=False, num_workers=4
         )
@@ -653,17 +619,10 @@ def evaluate_uncertainty(
             net, current_dataset, device, correct_count, batch
         )
     else:
-        raise ValueError(
-            "evaluation_type '" + evaluation_type + "' is unknown"
-        )
+        raise ValueError("evaluation_type '" + evaluation_type + "' is unknown")
 
     print(
-        'Evaluation on "'
-        + evaluation_type
-        + "_"
-        + split
-        + '" result: '
-        + str(result)
+        'Evaluation on "' + evaluation_type + "_" + split + '" result: ' + str(result)
     )
 
     if not os.path.exists(model_path + "/results"):
@@ -671,13 +630,7 @@ def evaluate_uncertainty(
 
     if save:
         with open(
-            model_path
-            + "/results/eval_"
-            + evaluation_type
-            + "_"
-            + split
-            + ".txt",
-            "w",
+            model_path + "/results/eval_" + evaluation_type + "_" + split + ".txt", "w",
         ) as f:
             f.write(str(result) + "\n")
 
@@ -694,10 +647,7 @@ def process_activation_kwargs(kwargs):
         activation_kwargs, kwargs = give(
             kwargs,  # type: ignore
             list(  # type: ignore
-                map(
-                    lambda a: activation + "_" + a,
-                    activation_params[activation],
-                )
+                map(lambda a: activation + "_" + a, activation_params[activation],)
             ),
         )
 
@@ -706,8 +656,7 @@ def process_activation_kwargs(kwargs):
 
         func = activations[activation](
             **rename_dict(
-                activation_kwargs,
-                lambda name: name.replace(activation + "_", ""),
+                activation_kwargs, lambda name: name.replace(activation + "_", ""),
             )
         )
 
@@ -803,9 +752,7 @@ def train(
 
     if optimizer is None:
         optimizer = "SGD"
-        kwargs["optimizer_lr"] = 0.001 / (
-            monte_carlo_steps if train_uncertainty else 1
-        )
+        kwargs["optimizer_lr"] = 0.001 / (monte_carlo_steps if train_uncertainty else 1)
         kwargs["optimizer_momentum"] = 0.9
 
     create_model_description(
@@ -830,13 +777,9 @@ def train(
     if "activation" in kwargs:
         kwargs = process_activation_kwargs(kwargs)
 
-    kwargs, current_optimizer_params = process_optimizer_kwargs(
-        optimizer, kwargs
-    )
+    kwargs, current_optimizer_params = process_optimizer_kwargs(optimizer, kwargs)
 
-    kwargs, current_loss_params = process_loss_kwargs(
-        loss, kwargs
-    )
+    kwargs, current_loss_params = process_loss_kwargs(loss, kwargs)
 
     device = torch.device(device if torch.cuda.is_available() else "cpu")
 
@@ -862,6 +805,8 @@ def train(
         optimizer=optimizers[optimizer],
         optimizer_params=current_optimizer_params,
         loss_func=loss_functions[loss](**current_loss_params),
+        loss_uses_network=loss in loss_functions_that_use_network,
+        batch=batch,
     )
     net.to(device)
 
@@ -912,10 +857,7 @@ def train(
                     + str(len(train))
                     + "]"
                     + ", ".join(
-                        [
-                            str(k) + "=" + str(loss_dict[k])
-                            for k in loss_dict.keys()
-                        ]
+                        [str(k) + "=" + str(loss_dict[k]) for k in loss_dict.keys()]
                     )
                     + " acc="
                     + str(accuracy_metric.get())
@@ -939,9 +881,7 @@ def train(
                     net.save(model_path)
 
                 if current_step % validation_steps == 0:
-                    val_acc = run_evaluation(
-                        net, val, device, correct_count, batch
-                    )
+                    val_acc = run_evaluation(net, val, device, correct_count, batch)
 
                     if validation_steps % len(train) == 0:
                         text = "epoch " + str(epoch + 1) + ": "
@@ -952,19 +892,12 @@ def train(
 
                     writer.add_scalar(
                         "val_acc",
-                        (
-                            val_acc[0]
-                            if isinstance(val_acc, tuple)
-                            else val_acc
-                        ),
+                        (val_acc[0] if isinstance(val_acc, tuple) else val_acc),
                         current_step,
                     )
 
                     with open(
-                        model_path
-                        + "/results/validation_batch_"
-                        + str(batch)
-                        + ".txt",
+                        model_path + "/results/validation_batch_" + str(batch) + ".txt",
                         "a",
                     ) as f:
                         f.write(text)
@@ -978,12 +911,8 @@ def train(
                     if best_description is None:
                         is_should_save_best = True
                     else:
-                        is_should_save_best = best_description[
-                            "result"
-                        ] * 1.001 < (
-                            val_acc[0]
-                            if isinstance(val_acc, tuple)
-                            else val_acc
+                        is_should_save_best = best_description["result"] * 1.001 < (
+                            val_acc[0] if isinstance(val_acc, tuple) else val_acc
                         )
 
                     if is_should_save_best and save_best:
@@ -995,15 +924,11 @@ def train(
                             "epoch": epoch + 1,
                             "batch": batch,
                             "result": (
-                                val_acc[0]
-                                if isinstance(val_acc, tuple)
-                                else val_acc
+                                val_acc[0] if isinstance(val_acc, tuple) else val_acc
                             ),
                         }
 
-                        with open(
-                            model_path + "/best/description.json", "w"
-                        ) as file:
+                        with open(model_path + "/best/description.json", "w") as file:
                             json.dump(data, file)
 
                         print(":::Saved Best:::")

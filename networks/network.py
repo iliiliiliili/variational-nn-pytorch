@@ -16,12 +16,16 @@ class Network(nn.Module):
         optimizer,
         optimizer_params,
         loss_func=nn.CrossEntropyLoss(),
+        loss_uses_network=False,
         monte_carlo_loss_func=nn.MSELoss(),
+        batch=1,
     ):
 
         self.optimizer = optimizer(self.parameters(), **optimizer_params)
         self.loss_func = loss_func
+        self.loss_uses_network = loss_uses_network
         self.monte_carlo_loss_func = monte_carlo_loss_func
+        self.batch = batch
 
     def train_step(
         self,
@@ -34,7 +38,7 @@ class Network(nn.Module):
     ):
 
         output = self(input)
-        loss = self.loss_func(output, target)
+        loss = self.loss_func(output, target, self, self.batch) if self.loss_uses_network else self.loss_func(output, target)
 
         loss.backward()
 
@@ -135,7 +139,7 @@ class Network(nn.Module):
 
         output = self(input)
         loss = (
-            self.loss_func(output, target).item()
+            (self.loss_func(output, target, self, self.batch) if self.loss_uses_network else self.loss_func(output, target)).item()
             if hasattr(self, "loss_func")
             else None
         )

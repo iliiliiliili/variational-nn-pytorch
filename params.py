@@ -1,4 +1,4 @@
-from losses import gaussian_regression_loss
+from losses import bbb_loss, gaussian_regression_loss
 from networks.const_mean_variational import (
     OneMeanVariationalConvolution,
     OneMeanVariationalLinear,
@@ -450,6 +450,7 @@ loss_functions = {
     "gaussian_regression_loss": gaussian_regression_loss,
     "mse": torch.nn.MSELoss,
     "bce": torch.nn.BCELoss,
+    "bbb": bbb_loss,
 }
 
 loss_params = {
@@ -457,7 +458,11 @@ loss_params = {
     "gaussian_regression_loss": ["noise_std"],
     "mse": [],
     "bce": [],
+    "bbb": ["sigma_0"],
 }
+
+
+loss_functions_that_use_network = ["bbb"]
 
 activations = {
     "relu": torch.nn.ReLU,
