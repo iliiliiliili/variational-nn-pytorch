@@ -6,6 +6,7 @@ from networks.const_mean_variational import (
     ZeroMeanVariationalLinear,
 )
 from networks.ensemble import create_ensemble
+from networks.hypermodel import HypermodelConvolution, HypermodelLinear, create_bbb_hypermodel, create_hypermodel, create_linear_hypermodel
 from networks.single_mean_variational import (
     SingleMeanVariationalConvolution,
     SingleMeanVariationalLinear,
@@ -287,6 +288,8 @@ dataset_params = {
 }
 
 networks = {
+    "mnist_base_hypermodel": lambda *args, **kwargs: create_linear_hypermodel(createMnistBase(HypermodelConvolution, HypermodelLinear), *args, **kwargs),
+    "mnist_base_bbb": lambda *args, **kwargs: create_bbb_hypermodel(createMnistBase(HypermodelConvolution, HypermodelLinear), *args, **kwargs),
     "mnist_base_ensemble": lambda *args, **kwargs: create_ensemble(createMnistBase(ClassicConvolution, ClassicLinear), *args, **kwargs),
     "mnist_base_vnn": createMnistBase(
         VariationalConvolution, VariationalLinear

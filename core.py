@@ -116,3 +116,30 @@ def zip_dicts(dict1: Dict[T1, T2], dict2: Dict[T1, T2]):
         result[key] = (val, dict2[key])
 
     return result
+
+
+def split_by_dict(values: List[T2], dict: Dict[T1, int]):
+    result = {}
+
+    i = 0
+
+    for key, count in dict.items():
+        result[key] = values[i:i + count]
+        i += count
+
+    return result
+
+
+def split_by_arrays(values: List[T2], counts: List[List[int]]):
+    result = []
+
+    i = 0
+
+    for local_counts in counts:
+        local_result = []
+        for count in local_counts:
+            local_result.append(values[i:i + count])
+            i += count
+        result.append(local_result)
+
+    return result

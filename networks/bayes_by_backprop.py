@@ -11,8 +11,6 @@ class BayesByBackpropBase(nn.Module):
         body: nn.Module,
         dropout_module: Any,
         activation: Optional[nn.Module] = None,
-        dropout_probability: float = 0.5,
-        dropout_inplace: bool = False,
     ) -> None:
 
         super().__init__()
@@ -39,7 +37,7 @@ class BayesByBackpropConvolution(BayesByBackpropBase):
         kernel_size: int,
         stride: Union[Tuple, int] = 1,
         activation: Optional[nn.Module] = None,
-        dropout_probability: float = 0.5,
+        dropout_probability: float = 0.05,
         dropout_inplace: bool = False,
         dropout_type: Literal[
             "alpha", "feature_alpha", "standart"
@@ -80,7 +78,7 @@ class BayesByBackpropLinear(BayesByBackpropBase):
         in_features: int,
         out_features: int,
         activation: Optional[nn.Module] = None,
-        dropout_probability: float = 0.5,
+        dropout_probability: float = 0.05,
         dropout_inplace: bool = False,
         dropout_type: Literal[
             "alpha", "feature_alpha", "standart"
@@ -118,7 +116,7 @@ class BayesByBackpropConvolutionTranspose(BayesByBackpropBase):
         kernel_size: int,
         stride: Union[Tuple, int] = 1,
         activation: Optional[nn.Module] = None,
-        dropout_probability: float = 0.5,
+        dropout_probability: float = 0.05,
         dropout_inplace: bool = False,
         dropout_type: Literal[
             "alpha", "feature_alpha", "standart"
