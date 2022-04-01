@@ -711,6 +711,7 @@ def train(
     dataset_name,
     batch,
     epochs,
+    samples=1,
     model_path=None,
     model_suffix="",
     save_steps=-1,
@@ -831,6 +832,10 @@ def train(
                 data = data.to(device)
                 target = target.to(device)
 
+                if samples > 1:
+                    data = data.repeat(samples, *([1] * (len(data.shape) - 1)))
+                    target = target.repeat(samples, *([1] * (len(target.shape) - 1)))
+
                 current_step += 1
 
                 if train_uncertainty:
@@ -842,7 +847,7 @@ def train(
                         data, target, correct_count=correct_count
                     )
 
-                accuracy_metric.update(float(correct) / batch)
+                accuracy_metric.update(float(correct) / (batch * samples))
 
                 log = (
                     full_network_name
@@ -881,7 +886,7 @@ def train(
                     net.save(model_path)
 
                 if current_step % validation_steps == 0:
-                    val_acc = run_evaluation(net, val, device, correct_count, batch)
+                    val_acc = run_evaluation(net, val, device, correct_count, batch * samples)
 
                     if validation_steps % len(train) == 0:
                         text = "epoch " + str(epoch + 1) + ": "
@@ -923,6 +928,7 @@ def train(
                         data = {
                             "epoch": epoch + 1,
                             "batch": batch,
+                            "samples": samples,
                             "result": (
                                 val_acc[0] if isinstance(val_acc, tuple) else val_acc
                             ),
