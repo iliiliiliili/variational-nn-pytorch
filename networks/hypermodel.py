@@ -11,10 +11,10 @@ import numpy as np
 def get_shapes(network: Network):
     shapes = [a.parameter_shapes for a in network.modules() if hasattr(a, "parameter_shapes")]
     return shapes
-    
+
 
 class HypermodelNetwork(Network):
-    def __init__(self, base, hypertorso_creator, index_dim, index_scale=0, scale_weights=False) -> None:
+    def __init__(self, base, hypertorso_creator, index_dim, index_scale=0, scale_weights=False, shape_index=False) -> None:
         super().__init__()
         self.base = base
 
@@ -22,6 +22,7 @@ class HypermodelNetwork(Network):
         self.index_dim = self.total_size if index_dim is None else index_dim
         self.index_scale = index_scale
         self.scale_weights = scale_weights
+        self.shape_index = shape_index
 
         self.hypertorso = hypertorso_creator(index_dim, self.total_size, self.shapes)
 
@@ -55,12 +56,14 @@ class HypermodelNetwork(Network):
             return result
 
         def single_scale(w):
-            return w / np.prod(w.shape)
+            return w / np.sqrt(np.prod(w.shape))
 
-        # flat_index = singe_prior_index(self.index_dim)
-        shaped_index = [[singe_prior_index(x, self.index_scale) for x in sub_shapes] for sub_shapes in self.shapes]
+        if self.shape_index:
+            index = [[singe_prior_index(x, self.index_scale) for x in sub_shapes] for sub_shapes in self.shapes]
+        else:
+            index = singe_prior_index(self.index_dim)
 
-        weights = self.hypertorso(shaped_index)
+        weights = self.hypertorso(index)
 
         if self.scale_weights:
             weights = [[single_scale(w) if i == 0 else w for i, w in enumerate(sub_weights)] for sub_weights in weights]
@@ -68,10 +71,10 @@ class HypermodelNetwork(Network):
         return weights
 
 
-def create_hypermodel(network_creator, hypertorso_creator, index_dim, index_scale, scale_weights, **kwargs):
+def create_hypermodel(network_creator, hypertorso_creator, index_dim, index_scale, scale_weights, shape_index, **kwargs):
     base = network_creator(**kwargs)
 
-    result = HypermodelNetwork(base, hypertorso_creator, index_dim, index_scale, scale_weights)
+    result = HypermodelNetwork(base, hypertorso_creator, index_dim, index_scale, scale_weights, shape_index)
 
     return result
 
@@ -79,7 +82,7 @@ def create_hypermodel(network_creator, hypertorso_creator, index_dim, index_scal
 def create_linear_hypermodel(network_creator, index_dim, **kwargs):
     hypertorso_creator = lambda index_dim, total_parameters, shapes: LinearHypertorso(index_dim, shapes)
 
-    result = create_hypermodel(network_creator, hypertorso_creator, index_dim, scale_weights=False, **kwargs)
+    result = create_hypermodel(network_creator, hypertorso_creator, index_dim, scale_weights=False, shape_index=False, **kwargs)
 
     return result
 
@@ -87,7 +90,7 @@ def create_linear_hypermodel(network_creator, index_dim, **kwargs):
 def create_bbb_hypermodel(network_creator, index_scale=1, **kwargs):
     hypertorso_creator = lambda _, total_parameters, shapes: DiagonalLinearHypertorso(total_parameters, shapes)
 
-    result = create_hypermodel(network_creator, hypertorso_creator, None, index_scale=index_scale, scale_weights=False, **kwargs)
+    result = create_hypermodel(network_creator, hypertorso_creator, None, index_scale=index_scale, scale_weights=False, shape_index=True, **kwargs)
 
     return result
 
@@ -288,11 +291,14 @@ class LinearHypertorso(nn.Module):
         super().__init__()
 
         self.hyper_layer = nn.Linear(index_dim, index_dim)
-        self.layers = nn.ModuleList([nn.ModuleList([nn.Linear(index_dim, x) for x in sub_shapes]) for sub_shapes in shapes])
+        self.layers = nn.ModuleList([nn.ModuleList([nn.Linear(index_dim, np.prod(x)) for x in sub_shapes]) for sub_shapes in shapes])
+        self.shapes = shapes
     
     def forward(self, x):
         hyper_index = self.hyper_layer(x)
 
-        result = [[x(hyper_index) for x in sub_layers] for sub_layers in self.layers]
+        # hyper_index = torch.ones_like(x)
+
+        result = [[l(hyper_index).reshape(s) for s, l in zip(layer_shapes, layer_layers)] for layer_shapes, layer_layers in zip(self.shapes, self.layers)]
 
         return result
