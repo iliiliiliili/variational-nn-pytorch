@@ -18,7 +18,7 @@ from networks.single_std_variational import (
 
 from networks.architectures.cifar10_mini_base import createCifar10MiniBase
 from networks.architectures.mnist_mlp import createMnistMlp
-from networks.architectures.mnist_double_linear import createMnistDoubleLinear
+from networks.architectures.mnist_conv_max import createMnistConvMax
 from networks.architectures.mnist_mini2_base import createMnistMini2Base
 from networks.architectures.mnist_mini_base import createMnistMiniBase
 from networks.architectures.mnist_auto_encoder_base import createMnistAutoEncoderBase
@@ -287,163 +287,59 @@ dataset_params = {
     },
 }
 
-networks = {
-    "mnist_base_hypermodel": lambda *args, **kwargs: create_linear_hypermodel(createMnistBase(HypermodelConvolution, HypermodelLinear), *args, **kwargs),
-    "mnist_base_bbb": lambda *args, **kwargs: create_bbb_hypermodel(createMnistBase(HypermodelConvolution, HypermodelLinear), *args, **kwargs),
-    "mnist_base_ensemble": lambda *args, **kwargs: create_ensemble(createMnistBase(ClassicConvolution, ClassicLinear), *args, **kwargs),
-    "mnist_base_vnn": createMnistBase(
-        VariationalConvolution, VariationalLinear
-    ),
-    "mnist_base_classic": createMnistBase(ClassicConvolution, ClassicLinear),
-    "mnist_base_dropout": createMnistBase(DropoutConvolution, DropoutLinear),
-    "mnist_mini_base_vnn": createMnistMiniBase(
-        VariationalConvolution, VariationalLinear
-    ),
-    "mnist_mini_base_classic": createMnistMiniBase(
-        ClassicConvolution, ClassicLinear
-    ),
-    "mnist_mini_base_dropout": createMnistMiniBase(
-        DropoutConvolution, DropoutLinear
-    ),
-    "mnist_mini2_base_vnn": createMnistMini2Base(
-        VariationalConvolution, VariationalLinear
-    ),
-    "mnist_mini2_base_classic": createMnistMini2Base(
-        ClassicConvolution, ClassicLinear
-    ),
-    "mnist_mini2_base_dropout": createMnistMini2Base(
-        DropoutConvolution, DropoutLinear
-    ),
-    "mnist_double_linear_vnn": createMnistDoubleLinear(
-        VariationalConvolution, VariationalLinear
-    ),
-    "mnist_double_linear_classic": createMnistDoubleLinear(
-        ClassicConvolution, ClassicLinear
-    ),
-    "mnist_double_linear_dropout": createMnistDoubleLinear(
-        DropoutConvolution, DropoutLinear
-    ),
-    "mnist_mlp_vnn": createMnistMlp(VariationalConvolution, VariationalLinear),
-    "mnist_mlp_classic": createMnistMlp(ClassicConvolution, ClassicLinear),
-    "mnist_mlp_dropout": createMnistMlp(DropoutConvolution, DropoutLinear),
-    "mnist_base_0vnn": createMnistBase(
-        ZeroMeanVariationalConvolution, ZeroMeanVariationalLinear
-    ),
-    "mnist_base_1vnn": createMnistBase(
-        OneMeanVariationalConvolution, OneMeanVariationalLinear
-    ),
-    "mnist_base_smvnn": createMnistBase(
-        SingleMeanVariationalConvolution, SingleMeanVariationalLinear
-    ),
-    "mnist_base_ssvnn": createMnistBase(
-        SingleStdVariationalConvolution, SingleStdVariationalLinear
-    ),
-    "mnist_auto_encoder_base_vnn": createMnistAutoEncoderBase(
-        VariationalConvolution, VariationalLinear
-    ),
-    "cifar10_base_vnn": createCifar10Base(
-        VariationalConvolution, VariationalLinear
-    ),
-    "cifar10_base_classic": createCifar10Base(
-        ClassicConvolution, ClassicLinear
-    ),
-    "cifar10_base_dropout": createCifar10Base(
-        DropoutConvolution, DropoutLinear
-    ),
-    "cifar10_mini_base_vnn": createCifar10MiniBase(
-        VariationalConvolution, VariationalLinear
-    ),
-    "cifar10_mini_base_classic": createCifar10MiniBase(
-        ClassicConvolution, ClassicLinear
-    ),
-    "cifar10_mini_base_dropout": createCifar10MiniBase(
-        DropoutConvolution, DropoutLinear
-    ),
-    "resnet_vnn_18": createResnet(VariationalConvolution, VariationalLinear)[
-        "ResNet18"
-    ],
-    "resnet_vnn_34": createResnet(VariationalConvolution, VariationalLinear)[
-        "ResNet34"
-    ],
-    "resnet_vnn_50": createResnet(VariationalConvolution, VariationalLinear)[
-        "ResNet50"
-    ],
-    "resnet_vnn_101": createResnet(VariationalConvolution, VariationalLinear)[
-        "ResNet101"
-    ],
-    "resnet_vnn_152": createResnet(VariationalConvolution, VariationalLinear)[
-        "ResNet152"
-    ],
-    "resnet_classic_18": createResnet(ClassicConvolution, ClassicLinear)[
-        "ResNet18"
-    ],
-    "resnet_classic_34": createResnet(ClassicConvolution, ClassicLinear)[
-        "ResNet34"
-    ],
-    "resnet_classic_50": createResnet(ClassicConvolution, ClassicLinear)[
-        "ResNet50"
-    ],
-    "resnet_classic_101": createResnet(ClassicConvolution, ClassicLinear)[
-        "ResNet101"
-    ],
-    "resnet_classic_152": createResnet(ClassicConvolution, ClassicLinear)[
-        "ResNet152"
-    ],
-    "resnet_dropout_18": createResnet(DropoutConvolution, DropoutLinear)[
-        "ResNet18"
-    ],
-    "resnet_dropout_34": createResnet(DropoutConvolution, DropoutLinear)[
-        "ResNet34"
-    ],
-    "resnet_dropout_50": createResnet(DropoutConvolution, DropoutLinear)[
-        "ResNet50"
-    ],
-    "resnet_dropout_101": createResnet(DropoutConvolution, DropoutLinear)[
-        "ResNet101"
-    ],
-    "resnet_dropout_152": createResnet(DropoutConvolution, DropoutLinear)[
-        "ResNet152"
-    ],
-    "vgg_vnn_11": createVGG(VariationalConvolution, VariationalLinear)[
-        "VGG11"
-    ],
-    "vgg_vnn_13": createVGG(VariationalConvolution, VariationalLinear)[
-        "VGG13"
-    ],
-    "vgg_vnn_16": createVGG(VariationalConvolution, VariationalLinear)[
-        "VGG16"
-    ],
-    "vgg_vnn_19": createVGG(VariationalConvolution, VariationalLinear)[
-        "VGG19"
-    ],
-    "vgg_classic_11": createVGG(ClassicConvolution, ClassicLinear)["VGG11"],
-    "vgg_classic_13": createVGG(ClassicConvolution, ClassicLinear)["VGG13"],
-    "vgg_classic_16": createVGG(ClassicConvolution, ClassicLinear)["VGG16"],
-    "vgg_classic_19": createVGG(ClassicConvolution, ClassicLinear)["VGG19"],
-    "vgg_dropout_11": createVGG(DropoutConvolution, DropoutLinear)["VGG11"],
-    "vgg_dropout_13": createVGG(DropoutConvolution, DropoutLinear)["VGG13"],
-    "vgg_dropout_16": createVGG(DropoutConvolution, DropoutLinear)["VGG16"],
-    "vgg_dropout_19": createVGG(DropoutConvolution, DropoutLinear)["VGG19"],
-    "densenet_pure": densenet_pure.DenseNet121,
-    "densenet1_classic": densenet1.createDenseNet(
-        ClassicConvolution, ClassicLinear
-    ),
-    "densenet1_vnn": densenet1.createDenseNet(
-        VariationalConvolution, VariationalLinear
-    ),
-    "densenet2_classic": densenet2.createDenseNet2(
-        ClassicConvolution, ClassicLinear
-    ),
-    "densenet2_vnn": densenet2.createDenseNet2(
-        VariationalConvolution, VariationalLinear
-    ),
-    "densenet2_dropout": densenet2.createDenseNet2(
-        DropoutConvolution, DropoutLinear
-    ),
-    "resnet_pure_50": resnet_pure.Resnet50,
-    "vgg_pure_16": vgg_pure.Vgg16,
-    "vgg_pure_19": vgg_pure.Vgg19,
-}
+
+def create_network(network_name, network_type):
+
+    def model_generator(network_creator, network_type):
+        if network_type == "vnn":
+            return network_creator(VariationalConvolution, VariationalLinear)
+        if network_type == "classic":
+            return network_creator(ClassicConvolution, ClassicLinear)
+        elif network_type == "dropout":
+            return network_creator(DropoutConvolution, DropoutLinear)
+        elif network_type == "bbb":
+            return lambda *args, **kwargs: create_bbb_hypermodel(network_creator(HypermodelConvolution, HypermodelLinear), *args, **kwargs)
+        elif network_type == "hypermodel":
+            return lambda *args, **kwargs: create_linear_hypermodel(network_creator(HypermodelConvolution, HypermodelLinear), *args, **kwargs)
+        elif network_type == "ensemble":
+            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "classic"), *args, **kwargs)
+        elif network_type == "ensemble_vnn":
+            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "vnn"), *args, **kwargs)
+        elif network_type == "ensemble_dropout":
+            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "dropout"), *args, **kwargs)
+        elif network_type == "ensemble_bbb":
+            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "bbb"), *args, **kwargs)
+        elif network_type == "ensemble_hypermodel":
+            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "hypermodel"), *args, **kwargs)
+        elif network_type == "ensemble_ensemble":
+            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "ensemble"), *args, **kwargs)
+
+    creators = {
+        "mnist_base": createMnistBase,
+        "mnist_mini_base": createMnistMiniBase,
+        "mnist_mini2_base": createMnistMini2Base,
+        "mnist_conv_max": createMnistConvMax,
+        "mnist_mlp": createMnistMlp,
+        "mnist_auto_encoder_base": createMnistAutoEncoderBase,
+        "cifar10_base": createCifar10Base,
+        "cifar10_mini_base": createCifar10MiniBase,
+        "resnet_18": lambda *args: createResnet(*args)["ResNet18"],
+        "resnet_34": lambda *args: createResnet(*args)["ResNet34"],
+        "resnet_50": lambda *args: createResnet(*args)["ResNet50"],
+        "resnet_101": lambda *args: createResnet(*args)["ResNet101"],
+        "resnet_152": lambda *args: createResnet(*args)["ResNet152"],
+        "vgg_11": lambda *args: createVGG(*args)["VGG11"],
+        "vgg_13": lambda *args: createVGG(*args)["VGG13"],
+        "vgg_16": lambda *args: createVGG(*args)["VGG16"],
+        "vgg_19": lambda *args: createVGG(*args)["VGG19"],
+        "densenet1": densenet1.createDenseNet,
+        "densenet2": densenet2.createDenseNet2,
+    }
+
+    result = model_generator(creators[network_name], network_type)
+
+    return result
+
 
 loss_functions = {
     "cross_entropy": torch.nn.CrossEntropyLoss,

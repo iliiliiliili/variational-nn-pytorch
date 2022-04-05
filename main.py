@@ -17,8 +17,8 @@ import fire  # type:ignore
 import json
 
 from params import (
+    create_network,
     dataset_params,
-    networks,
     loss_functions,
     loss_functions_that_use_network,
     loss_params,
@@ -73,7 +73,7 @@ def correct_count(output, target):
     return labels.eq(target.data.view_as(labels)).sum()
 
 
-def run_evaluation(net: Network, val, device, correct_count, batch, eval_step=None):
+def run_evaluation(net: Network, val, device, correct_count, batch, samples, eval_step=None):
 
     if eval_step is None:
         eval_step = net.eval_step
@@ -96,7 +96,7 @@ def run_evaluation(net: Network, val, device, correct_count, batch, eval_step=No
         t = time.time()
 
         loss_dict, correct = eval_step(  # type: ignore
-            data, target, correct_count=correct_count
+            data, target, correct_count=correct_count, samples=samples
         )
 
         t = time.time() - t
@@ -153,10 +153,12 @@ def load_training_parameters(path):
 
 def evaluate(
     network_name=None,
+    network_type=None,
     dataset_name=None,
     restore_training_parameters=True,
     use_best=True,
     batch=1,
+    samples=1,
     model_path=None,
     model_suffix="",
     split="validation",
@@ -174,6 +176,7 @@ def evaluate(
         if dataset_name not in network_name:
             full_network_name = dataset_name + "_" + full_network_name
 
+        full_network_name += "_" + network_type
         full_network_name += "" if model_suffix == "" else "_" + model_suffix
 
         model_path = "./models/" + full_network_name
@@ -182,10 +185,12 @@ def evaluate(
 
     non_kwargs = [
         "network_name",
+        "network_type",
         "dataset_name",
         "restore_training_parameters",
         "use_best",
         "batch",
+        "samples",
         "model_path",
         "model_suffix",
         "split",
@@ -193,14 +198,17 @@ def evaluate(
         "evaluation_type",
         "attack_types",
         "save",
+        "loss_sigma_0",
     ]
 
     given_parameters = {
         "network_name": network_name,
+        "network_type": network_type,
         "dataset_name": dataset_name,
         "restore_training_parameters": restore_training_parameters,
         "use_best": use_best,
         "batch": batch,
+        "samples": samples,
         "model_path": model_path,
         "model_suffix": model_suffix,
         "split": split,
@@ -232,13 +240,15 @@ def evaluate(
                 parameters[key] = val
 
     for key, val in given_parameters.items():
-        if val is not None:
+        if (val is not None) or (key not in parameters):
             parameters[key] = val
 
     network_name = parameters["network_name"]
+    network_type = parameters["network_type"]
     dataset_name = parameters["dataset_name"]
     use_best = parameters["use_best"]
     batch = parameters["batch"]
+    samples = parameters["samples"]
     model_path = parameters["model_path"]
     model_suffix = parameters["model_suffix"]
     split = parameters["split"]
@@ -260,7 +270,7 @@ def evaluate(
 
     device = torch.device(device if torch.cuda.is_available() else "cpu")
 
-    net: Network = networks[network_name](**kwargs)
+    net: Network = create_network(network_name, network_type)(**kwargs)
 
     net.load(model_path, device)
     net.to(device)
@@ -277,7 +287,7 @@ def evaluate(
             current_dataset, batch, shuffle=False, num_workers=4
         )
 
-        result, fps = run_evaluation(net, current_dataset, device, correct_count, batch)
+        result, fps = run_evaluation(net, current_dataset, device, correct_count, batch, samples)
     elif evaluation_type in [
         "gaussian",
         "uniform",
@@ -293,7 +303,7 @@ def evaluate(
                 current_dataset, batch, shuffle=False, num_workers=0
             )
 
-            return run_evaluation(net, current_dataset, device, correct_count, batch)
+            return run_evaluation(net, current_dataset, device, correct_count, batch, samples)
 
         result = {
             "gaussian": evaluate_gaussian,
@@ -338,26 +348,52 @@ def evaluate(
                 normalized_net = net
 
             def attack_step(
-                input, target, correct_count=None,
+                input, target, correct_count=None, samples=1,
             ):
                 nonlocal normalized_net
+                nonlocal net
+
+                def sampled_net(net, normalized_net, input, samples):
+                    average_output = None
+                    average_loss = None
+
+                    for step in range(samples):
+                        output = normalized_net(input)
+                        loss = (
+                            (net.loss_func(output, target, net, net.batch) if net.loss_uses_network else net.loss_func(output, target)).item()
+                            if hasattr(net, "loss_func")
+                            else None
+                        )
+
+                        if average_output is None:
+                            average_output = output
+                        else:
+                            average_output += output
+                        if average_loss is None:
+                            average_loss = loss
+                        else:
+                            average_loss += loss
+
+                    average_output /= samples
+                    if average_loss is not None:
+                        average_loss /= samples
+                    
+                    return average_output, average_loss
 
                 adv_images = attack(input, target)
-                output = normalized_net(adv_images)
-                loss = (
-                    net.loss_func(output, target).item()
-                    if hasattr(net, "loss_func")
-                    else None
-                )
+                output, loss = sampled_net(net, normalized_net, adv_images, samples)
+                loss_dict = {
+                    "loss": loss,
+                }
 
                 if correct_count is None:
-                    return loss
+                    return loss_dict
                 else:
                     return (
-                        loss,
+                        loss_dict,
                         [
                             correct_count(output, target),
-                            correct_count(normalized_net(input), target),
+                            correct_count(sampled_net(net, normalized_net, input, samples)[0], target),
                         ],
                     )
 
@@ -367,6 +403,7 @@ def evaluate(
                 device,
                 correct_count,
                 batch,
+                samples,
                 eval_step=attack_step,
             )
 
@@ -708,6 +745,7 @@ def process_loss_kwargs(loss_name, kwargs):
 
 def train(
     network_name,
+    network_type,
     dataset_name,
     batch,
     epochs,
@@ -734,6 +772,7 @@ def train(
         if dataset_name not in network_name:
             full_network_name = dataset_name + "_" + full_network_name
 
+        full_network_name += "_" + network_type
         full_network_name += "" if model_suffix == "" else "_" + model_suffix
 
         model_path = "./models/" + full_network_name
@@ -759,6 +798,7 @@ def train(
     create_model_description(
         model_path,
         network_name=network_name,
+        network_type=network_type,
         dataset_name=dataset_name,
         batch=batch,
         epochs=epochs,
@@ -784,7 +824,7 @@ def train(
 
     device = torch.device(device if torch.cuda.is_available() else "cpu")
 
-    net: Network = networks[network_name](**kwargs)
+    net: Network = create_network(network_name, network_type)(**kwargs)
 
     train, val, _ = create_train_validation_test(dataset_params[dataset_name])
 
@@ -832,9 +872,9 @@ def train(
                 data = data.to(device)
                 target = target.to(device)
 
-                if samples > 1:
-                    data = data.repeat(samples, *([1] * (len(data.shape) - 1)))
-                    target = target.repeat(samples, *([1] * (len(target.shape) - 1)))
+                # if samples > 1:
+                #     data = data.repeat(samples, *([1] * (len(data.shape) - 1)))
+                #     target = target.repeat(samples, *([1] * (len(target.shape) - 1)))
 
                 current_step += 1
 
@@ -844,10 +884,10 @@ def train(
                     )
                 else:
                     loss_dict, correct = net.train_step(
-                        data, target, correct_count=correct_count
+                        data, target, correct_count=correct_count, samples=samples,
                     )
 
-                accuracy_metric.update(float(correct) / (batch * samples))
+                accuracy_metric.update(float(correct) / batch)
 
                 log = (
                     full_network_name
@@ -886,7 +926,7 @@ def train(
                     net.save(model_path)
 
                 if current_step % validation_steps == 0:
-                    val_acc = run_evaluation(net, val, device, correct_count, batch * samples)
+                    val_acc = run_evaluation(net, val, device, correct_count, batch, samples)
 
                     if validation_steps % len(train) == 0:
                         text = "epoch " + str(epoch + 1) + ": "
