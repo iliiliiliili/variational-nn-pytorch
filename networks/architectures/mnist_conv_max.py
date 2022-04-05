@@ -3,8 +3,8 @@ import torch
 from networks.network import Network
 
 
-def createMnistDoubleLinear(Convolution, Linear):
-    class MnistDoubleLinear(Network):
+def createMnistConvMax(Convolution, Linear):
+    class MnistConvMax(Network):
 
         def __init__(self, **kwargs) -> None:
 
@@ -24,4 +24,4 @@ def createMnistDoubleLinear(Convolution, Linear):
 
             return self.model(x)
 
-    return MnistDoubleLinear
+    return MnistConvMax
