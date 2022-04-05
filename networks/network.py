@@ -35,12 +35,23 @@ class Network(nn.Module):
             Callable[[torch.Tensor, torch.Tensor], int]
         ] = None,
         clip_grad: Optional[float] = None,
+        samples=1,
     ):
 
-        output = self(input)
-        loss = self.loss_func(output, target, self, self.batch) if self.loss_uses_network else self.loss_func(output, target)
+        average_loss = 0
+        average_output = 0
 
-        loss.backward()
+        for step in range(samples):
+            output = self(input)
+            loss = self.loss_func(output, target, self, self.batch) if self.loss_uses_network else self.loss_func(output, target)
+
+            average_loss += loss
+            average_output += output
+        
+        average_loss /= samples
+        average_output /= samples
+
+        average_loss.backward()
 
         if clip_grad is not None:
             torch.nn.utils.clip_grad_norm_(self.parameters(), clip_grad)
@@ -49,13 +60,13 @@ class Network(nn.Module):
         self.optimizer.zero_grad()
 
         loss_dict = {
-            "loss": loss.item(),
+            "loss": average_loss.item(),
         }
 
         if correct_count is None:
             return loss_dict
         else:
-            return loss_dict, correct_count(output, target)
+            return loss_dict, correct_count(average_output, target)
 
     def train_step_uncertainty(
         self,
@@ -135,23 +146,42 @@ class Network(nn.Module):
         correct_count: Optional[
             Callable[[torch.Tensor, torch.Tensor], int]
         ] = None,
+        samples=1,
     ):
 
-        output = self(input)
-        loss = (
-            (self.loss_func(output, target, self, self.batch) if self.loss_uses_network else self.loss_func(output, target)).item()
-            if hasattr(self, "loss_func")
-            else None
-        )
+        average_output = None
+        average_loss = None
+
+        for step in range(samples):
+            output = self(input)
+            loss = (
+                (self.loss_func(output, target, self, self.batch) if self.loss_uses_network else self.loss_func(output, target)).item()
+                if hasattr(self, "loss_func")
+                else None
+            )
+
+            if average_output is None:
+                average_output = output
+            else:
+                average_output += output
+            if average_loss is None:
+                average_loss = loss
+            else:
+                average_loss += loss
+        
+        average_output /= samples
+        
+        if average_loss is not None:
+            average_loss /= samples
 
         loss_dict = {
-            "loss": loss,
+            "loss": average_loss,
         }
 
         if correct_count is None:
             return loss_dict
         else:
-            return loss_dict, correct_count(output, target)
+            return loss_dict, correct_count(average_output, target)
 
     def save(self, save_path):
 
