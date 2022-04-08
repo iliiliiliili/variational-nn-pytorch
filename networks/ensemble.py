@@ -17,8 +17,7 @@ class EnsembleNetwork(Network):
         def output_with_prior(network, prior):
             result = network(x)
 
-            with torch.no_grad():
-                result += prior(x) * self.prior_scale
+            result += prior(x) * self.prior_scale
 
             return result
 
@@ -29,6 +28,7 @@ class EnsembleNetwork(Network):
 def create_ensemble(network_creator, num_ensemble=10, prior_scale=1, **kwargs):
     networks = [network_creator(**kwargs) for _ in range(num_ensemble)]
     priors = [network_creator(**kwargs) for _ in range(num_ensemble)]
+    [p.requires_grad_(False) for p in priors]
 
     result = EnsembleNetwork(networks, priors, prior_scale)
 
