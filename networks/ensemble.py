@@ -16,8 +16,8 @@ class EnsembleNetwork(Network):
 
         def output_with_prior(network, prior):
             result = network(x)
-
-            result += prior(x) * self.prior_scale
+            if self.prior_scale > 0:
+                result += prior(x) * self.prior_scale
 
             return result
 
@@ -27,8 +27,11 @@ class EnsembleNetwork(Network):
 
 def create_ensemble(network_creator, num_ensemble=10, prior_scale=1, **kwargs):
     networks = [network_creator(**kwargs) for _ in range(num_ensemble)]
-    priors = [network_creator(**kwargs) for _ in range(num_ensemble)]
-    [p.requires_grad_(False) for p in priors]
+    if prior_scale > 0: 
+        priors = [network_creator(**kwargs) for _ in range(num_ensemble)]
+        [p.requires_grad_(False) for p in priors]
+    else:
+        priors = [nn.Identity() for _ in range(num_ensemble)]
 
     result = EnsembleNetwork(networks, priors, prior_scale)
 
