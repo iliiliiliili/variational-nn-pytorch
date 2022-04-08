@@ -302,17 +302,17 @@ def create_network(network_name, network_type):
         elif network_type == "hypermodel":
             return lambda *args, **kwargs: create_linear_hypermodel(network_creator(HypermodelConvolution, HypermodelLinear), *args, **kwargs)
         elif network_type == "ensemble":
-            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "classic"), *args, **kwargs)
+            return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "classic"), *args, **kwargs)
         elif network_type == "ensemble_vnn":
-            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "vnn"), *args, **kwargs)
+            return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "vnn"), *args, **kwargs)
         elif network_type == "ensemble_dropout":
-            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "dropout"), *args, **kwargs)
+            return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "dropout"), *args, **kwargs)
         elif network_type == "ensemble_bbb":
-            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "bbb"), *args, **kwargs)
+            return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "bbb"), *args, **kwargs)
         elif network_type == "ensemble_hypermodel":
-            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "hypermodel"), *args, **kwargs)
+            return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "hypermodel"), *args, **kwargs)
         elif network_type == "ensemble_ensemble":
-            return lambda *args, **kwargs: create_linear_hypermodel(model_generator(network_creator, "ensemble"), *args, **kwargs)
+            return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "ensemble"), *args, **kwargs)
 
     creators = {
         "mnist_base": createMnistBase,
@@ -365,8 +365,8 @@ activations = {
     "relu6": torch.nn.ReLU6,
     "sigmoid": torch.nn.Sigmoid,
     "tanh": torch.nn.Tanh,
-    "leacky_relu": torch.nn.LeakyReLU,
-    "noact": lambda **kwargs: None,
+    "lrelu": torch.nn.LeakyReLU,
+    "none": lambda **kwargs: None,
 }
 
 activation_params = {
@@ -374,8 +374,8 @@ activation_params = {
     "relu6": ["inplace"],
     "sigmoid": [],
     "tanh": [],
-    "leacky_relu": ["negative_slope", "inplace"],
-    "noact": [],
+    "lrelu": ["negative_slope", "inplace"],
+    "none": [],
 }
 
 optimizers = {
