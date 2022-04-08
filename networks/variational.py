@@ -114,9 +114,6 @@ class VariationalBase(nn.Module):
                 else:
                     raise ValueError("Unknown activation target: " + target)
 
-            if self.nstds is not None:
-                self.nstds = nn.Sequential(self.nstds, current_activation,)
-
     def forward(self, input):
 
         if isinstance(input, tuple):
@@ -363,17 +360,8 @@ class VariationalConvolutionTranspose(VariationalBase):
 
         if global_std_mode == "replace":
             stds = None
-            nstds = None
         else:
             stds = nn.ConvTranspose2d(
-                in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=kernel_size,
-                stride=stride,
-                bias=bias,
-                **kwargs,
-            )
-            nstds = nn.ConvTranspose2d(
                 in_channels=in_channels,
                 out_channels=out_channels,
                 kernel_size=kernel_size,
@@ -385,7 +373,6 @@ class VariationalConvolutionTranspose(VariationalBase):
         super().build(
             means,
             stds,
-            nstds,
             nn.BatchNorm2d,
             out_channels,
             activation=activation,
