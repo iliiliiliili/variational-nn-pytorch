@@ -9,7 +9,7 @@ class EnsembleNetwork(Network):
     def __init__(self, networks, priors, prior_scale) -> None:
         super().__init__()
         self.networks = nn.ModuleList(networks)
-        self.priors = nn.ModuleList(networks)
+        self.priors = nn.ModuleList(priors)
         self.prior_scale = prior_scale
 
     def forward(self, x):
@@ -26,9 +26,9 @@ class EnsembleNetwork(Network):
         return result
 
 
-def create_ensemble(network_creator, num_ensemble=10, prior_scale=1):
-    networks = [network_creator() for _ in range(num_ensemble)]
-    priors = [network_creator() for _ in range(num_ensemble)]
+def create_ensemble(network_creator, num_ensemble=10, prior_scale=1, **kwargs):
+    networks = [network_creator(**kwargs) for _ in range(num_ensemble)]
+    priors = [network_creator(**kwargs) for _ in range(num_ensemble)]
 
     result = EnsembleNetwork(networks, priors, prior_scale)
 
