@@ -81,7 +81,7 @@ def run_evaluation(net: Network, val, device, correct_count, batch, samples, eva
     print()
 
     net.eval()
-    VariationalBase.GLOBAL_STD = 0
+    # VariationalBase.GLOBAL_STD = 0
 
     accuracy_metric = AverageMetric()
     accuracy_metric2 = None
@@ -126,6 +126,7 @@ def run_evaluation(net: Network, val, device, correct_count, batch, samples, eva
                 if accuracy_metric2 is not None
                 else ""
             )
+            + (" g_std=" + str(VariationalBase.GLOBAL_STD) if VariationalBase.GLOBAL_STD != 0 else "")
             + " fps="
             + str(fps_metric.get(-1)),
             end="\r",
@@ -166,6 +167,8 @@ def evaluate(
     evaluation_type="normal",
     attack_types=None,
     save=True,
+    start_global_std: Optional[float] = None,
+    end_global_std: Optional[float] = None,
     **kwargs,
 ):
 
@@ -199,6 +202,8 @@ def evaluate(
         "attack_types",
         "save",
         "loss_sigma_0",
+        "start_global_std",
+        "end_global_std",
     ]
 
     given_parameters = {
@@ -231,8 +236,8 @@ def evaluate(
             "loss",
             "device",
             "save_best",
-            "start_global_std",
-            "end_global_std",
+            # "start_global_std",
+            # "end_global_std",
         ]
 
         for key, val in training_parameters.items():
@@ -256,6 +261,8 @@ def evaluate(
     evaluation_type = parameters["evaluation_type"]
     attack_types = parameters["attack_types"]
     save = parameters["save"]
+    start_global_std = parameters["start_global_std"]
+    end_global_std = parameters["end_global_std"]
 
     if use_best:
         model_path += "/best"
@@ -277,6 +284,7 @@ def evaluate(
 
     result = None
     fps = None
+    VariationalBase.GLOBAL_STD = end_global_std
 
     if evaluation_type == "normal":
 
@@ -439,7 +447,7 @@ def run_evaluation_uncertainty(
     print()
 
     net.eval()
-    VariationalBase.GLOBAL_STD = 0
+    # VariationalBase.GLOBAL_STD = 0
     # VariationalBase.LOG_STDS = True
 
     correct_count = 0
@@ -762,6 +770,7 @@ def train(
     end_global_std: Optional[float] = None,
     train_uncertainty: bool = False,
     monte_carlo_steps: int = 5,
+    allow_retrain: bool = True,
     **kwargs,
 ):
 
@@ -779,6 +788,10 @@ def train(
     else:
         full_network_name = ""
 
+    if os.path.exists(model_path) and not allow_retrain:
+        print("Already exists", model_path)
+        return
+
     if not os.path.exists(model_path):
         os.mkdir(model_path)
     if not os.path.exists(model_path + "/results"):
@@ -795,25 +808,32 @@ def train(
         kwargs["optimizer_lr"] = 0.001 / (monte_carlo_steps if train_uncertainty else 1)
         kwargs["optimizer_momentum"] = 0.9
 
-    create_model_description(
-        model_path,
-        network_name=network_name,
-        network_type=network_type,
-        dataset_name=dataset_name,
-        batch=batch,
-        epochs=epochs,
-        model_path=model_path,
-        model_suffix=model_suffix,
-        save_steps=save_steps,
-        validation_steps=validation_steps,
-        optimizer=optimizer,
-        loss=loss,
-        device=device,
-        save_best=save_best,
-        start_global_std=start_global_std,
-        end_global_std=end_global_std,
+    save_kwargs = {
+        "network_name": network_name,
+        "network_type": network_type,
+        "dataset_name": dataset_name,
+        "batch": batch,
+        "epochs": epochs,
+        "model_path": model_path,
+        "model_suffix": model_suffix,
+        "save_steps": save_steps,
+        "validation_steps": validation_steps,
+        "optimizer": optimizer,
+        "loss": loss,
+        "device": device,
+        "save_best": save_best,
+        "start_global_std": start_global_std,
+        "end_global_std": end_global_std,
         **kwargs,
-    )
+    }
+
+    def create_current_model_description(path):
+        create_model_description(
+            path,
+            **save_kwargs
+        )
+
+    create_current_model_description(model_path)
 
     if "activation" in kwargs:
         kwargs = process_activation_kwargs(kwargs)
@@ -871,10 +891,6 @@ def train(
 
                 data = data.to(device)
                 target = target.to(device)
-
-                # if samples > 1:
-                #     data = data.repeat(samples, *([1] * (len(data.shape) - 1)))
-                #     target = target.repeat(samples, *([1] * (len(target.shape) - 1)))
 
                 current_step += 1
 
@@ -942,10 +958,10 @@ def train(
                     )
 
                     with open(
-                        model_path + "/results/validation_batch_" + str(batch) + ".txt",
+                        model_path + "/results/validation_batch_" + str(batch) + "samples_" + str(samples) + ".txt",
                         "a",
                     ) as f:
-                        f.write(text)
+                        f.write(text + "\n")
 
                     best_description = get_best_description(
                         model_path + "/best/description.json"
@@ -976,6 +992,8 @@ def train(
 
                         with open(model_path + "/best/description.json", "w") as file:
                             json.dump(data, file)
+
+                        create_current_model_description(model_path + "/best")
 
                         print(":::Saved Best:::")
 
