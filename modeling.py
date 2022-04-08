@@ -223,7 +223,7 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4):
         "vnn": create_vnn_model_kwargs,
         "classic": create_classic_model_kwargs,
         "ensemble": create_ensemble_model_kwargs,
-        "ensemble": create_ensemble_model_kwargs,
+        "dropout": create_dropout_model_kwargs,
         "bbb": create_bbb_model_kwargs,
     }
 
@@ -270,11 +270,20 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4):
     while i < len(all_models):
         network_name, dataset_name, kwargs = all_models[i]
 
-        # try:
-        with torch.autograd.set_detect_anomaly(True):
-            train(network_name=network_name, dataset_name =dataset_name, allow_retrain=False, device="cuda:" + str(device_id), **kwargs)
-        # except Exception as e:
-        #     print("ERROR:", e)
+        try:
+            train(network_name=network_name, dataset_name=dataset_name, allow_retrain=False, device="cuda:" + str(device_id), **kwargs)
+        except Exception as e:
+            print("ERROR:", e)
+            with open("modeling_errors.txt", "w") as f:
+                description = {
+                    "network_name": network_name,
+                    "dataset_name": dataset_name,
+                    "allow_retrain": False,
+                    "device": "cuda:" + str(device_id),
+                    **kwargs
+                }
+                f.write(str(e) + str(network_name) + str(description))
+
         i += gpu_capacity * total_devices
 
 
