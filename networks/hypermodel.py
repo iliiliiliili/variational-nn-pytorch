@@ -1,8 +1,6 @@
-from turtle import forward
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 from torch import nn
 import torch
-from core import split_by_arrays
 from networks.functional import FunctionalConvolution, FunctionalConvolutionTranspose, FunctionalLinear
 from networks.network import Network
 import numpy as np

@@ -1,7 +1,6 @@
 
 
 import fire
-import torch
 from main import train
 
 
