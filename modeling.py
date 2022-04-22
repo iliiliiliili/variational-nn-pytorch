@@ -271,6 +271,10 @@ def create_bbb_model_kwargs(epochs):
 
 
 def create_models(datasets, network_types):
+
+    if network_types is None or network_types == "all":
+        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb"]
+
     kwarg_creators = {
         "vnn": create_reduced_vnn_model_kwargs,
         "classic": create_classic_model_kwargs,
@@ -326,9 +330,6 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4, datasets=["m
     device_id = id % total_devices
     i = id
 
-    if network_types is None or network_types == "all":
-        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb"]
-
     all_models = create_models(datasets, network_types)
     
     while i < len(all_models):
@@ -357,9 +358,6 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4, datasets=["m
 def run_indexed(network_types="all", index=0, output_dir="./models", datasets=["cifar10"]):
 
     i = index
-
-    if network_types is None or network_types == "all":
-        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb"]
 
     all_models = create_models(datasets, network_types)
     
