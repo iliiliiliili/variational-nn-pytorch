@@ -771,6 +771,7 @@ def train(
     train_uncertainty: bool = False,
     monte_carlo_steps: int = 5,
     allow_retrain: bool = True,
+    all_models_path = "./models",
     **kwargs,
 ):
 
@@ -784,7 +785,7 @@ def train(
         full_network_name += "_" + network_type
         full_network_name += "" if model_suffix == "" else "_" + model_suffix
 
-        model_path = "./models/" + full_network_name
+        model_path = all_models_path + "/" + full_network_name
     else:
         full_network_name = ""
 

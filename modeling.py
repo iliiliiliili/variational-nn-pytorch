@@ -56,6 +56,65 @@ def create_vnn_model_kwargs(epochs):
     return result
 
 
+def create_reduced_vnn_model_kwargs(epochs):
+
+    result = []
+
+    for samples in [1, 10, 100]:
+        for batch in [2, 20]:
+            for epochs in [epochs]:
+                for optimizer in ["Adam"]:
+                    for activation in ["lrelu", "relu", "tanh"]:
+                        for learning_rate in [1e-3, 5e-5]:
+                            for activation_mode, global_std_mode in [
+                                ["mean", "none"], 
+                                ["mean+std", "multiply"],
+                                ["mean+end", "replace"],
+                                ["none", "none"]
+                            ]:
+                                batch_norm_mode = activation_mode
+                                start_global_std = 1 if global_std_mode != "none" else None
+                                end_global_std = 0.5 if global_std_mode != "none" else None
+
+                                current_activation = activation
+                                activation_name = activation
+
+                                if len(activation_mode.split("+")) > 1:
+                                    current_activation = " ".join([current_activation] * len(activation_mode.split("+")))
+
+                                if activation_mode == "none":
+                                    activation_name = "none"
+
+                                model_suffix = (
+                                    "s" + str(samples) +
+                                    "b" + str(batch) +
+                                    "lr" + str(learning_rate).replace(".", "") + "-" +
+                                    "o" + str(optimizer) + "-" +
+                                    "a" + str(activation_name) + "-" +
+                                    "am" + str(activation_mode) + "-" +
+                                    "gs" + str(global_std_mode)
+                                )
+
+                                kwargs = {
+                                    "network_type": "vnn",
+                                    "model_suffix": model_suffix,
+                                    "epochs": epochs,
+                                    "batch": batch,
+                                    "samples": samples,
+                                    "optimizer": optimizer,
+                                    "activation": current_activation,
+                                    "activation_mode": activation_mode,
+                                    "batch_norm_mode": batch_norm_mode,
+                                    "optimizer_lr": learning_rate,
+                                    "start_global_std": start_global_std,
+                                    "end_global_std": end_global_std,
+                                }
+
+                                result.append(kwargs)
+
+    return result
+
+
 def create_classic_model_kwargs(epochs):
 
     result = []
@@ -211,16 +270,9 @@ def create_bbb_model_kwargs(epochs):
     return result
 
 
-def run(network_types="all", id=0, gpu_capacity=4, total_devices=4):
-
-    device_id = id % total_devices
-    i = id
-
-    if network_types is None or network_types == "all":
-        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb"]
-
+def create_models(datasets, network_types):
     kwarg_creators = {
-        "vnn": create_vnn_model_kwargs,
+        "vnn": create_reduced_vnn_model_kwargs,
         "classic": create_classic_model_kwargs,
         "ensemble": create_ensemble_model_kwargs,
         "dropout": create_dropout_model_kwargs,
@@ -231,16 +283,16 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4):
         "mnist": [
             "mnist_mini_base",
             "mnist_mini2_base",
-            "mnist_conv_max",
+            # "mnist_conv_max",
             "mnist_mlp",
         ],
         "cifar10": [
             "cifar10_base",
-            "cifar10_mini_base",
+            # "cifar10_mini_base",
             "resnet_18",
-            "resnet_101",
-            "vgg_13",
-            "densenet2",
+            # "resnet_101",
+            # "vgg_13",
+            # "densenet2",
         ]
     }
 
@@ -253,8 +305,6 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4):
         "cifar10": 10,
     }
 
-    datasets = ["mnist", "cifar10"]
-
     all_models = []
 
     for dataset in datasets:
@@ -266,6 +316,20 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4):
                 kwargs_list = kwarg_creators[network_type](epochs[dataset])
                 for kwargs in kwargs_list:
                     all_models.append((network_name, dataset_name, kwargs))
+    
+    print("Total models:", len(all_models))
+    return all_models
+
+
+def run(network_types="all", id=0, gpu_capacity=4, total_devices=4, datasets=["mnist"]):
+
+    device_id = id % total_devices
+    i = id
+
+    if network_types is None or network_types == "all":
+        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb"]
+
+    all_models = create_models(datasets, network_types)
     
     while i < len(all_models):
         network_name, dataset_name, kwargs = all_models[i]
@@ -288,6 +352,35 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4):
 
 
     print()
+
+
+def run_indexed(network_types="all", index=0, output_dir="./models", datasets=["cifar10"]):
+
+    i = index
+
+    if network_types is None or network_types == "all":
+        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb"]
+
+    all_models = create_models(datasets, network_types)
+    
+    network_name, dataset_name, kwargs = all_models[i]
+
+    try:
+        train(network_name=network_name, dataset_name=dataset_name, allow_retrain=False, device="cuda", all_models_path=output_dir, **kwargs)
+    except Exception as e:
+        print("ERROR:", e)
+        with open(f"{output_dir}/modeling_errors.txt", "w") as f:
+            description = {
+                "network_name": network_name,
+                "dataset_name": dataset_name,
+                "allow_retrain": False,
+                "device": "cuda",
+                **kwargs
+            }
+            f.write(str(e) + str(network_name) + str(description))
+
+    print()
+
 
 if __name__ == "__main__":
 
