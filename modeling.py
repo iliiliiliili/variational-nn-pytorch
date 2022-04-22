@@ -60,12 +60,12 @@ def create_reduced_vnn_model_kwargs(epochs):
 
     result = []
 
-    for samples in [1, 10, 100]:
-        for batch in [2, 20]:
+    for samples in [1, 10]:
+        for batch in [16]:
             for epochs in [epochs]:
                 for optimizer in ["Adam"]:
-                    for activation in ["lrelu", "relu", "tanh"]:
-                        for learning_rate in [1e-3, 5e-5]:
+                    for activation in ["lrelu"]:
+                        for learning_rate in [1e-4]:
                             for activation_mode, global_std_mode in [
                                 ["mean", "none"], 
                                 ["mean+std", "multiply"],
@@ -120,12 +120,12 @@ def create_classic_model_kwargs(epochs):
     result = []
 
     for samples in [1]:
-        for batch in [2, 20]:
+        for batch in [16]:
             for epochs in [epochs]:
-                for optimizer in ["Adam", "SGD"]:
-                    for activation in ["lrelu", "relu", "tanh"]:
-                        for learning_rate in [1e-3, 5e-5]:
-                            for use_batch_norm in [True, False]:
+                for optimizer in ["Adam"]:
+                    for activation in ["lrelu"]:
+                        for learning_rate in [1e-4]:
+                            for use_batch_norm in [True]:
                                     model_suffix = (
                                         "s" + str(samples) +
                                         "b" + str(batch) +
@@ -156,13 +156,13 @@ def create_ensemble_model_kwargs(epochs):
 
     result = []
 
-    for num_ensemble in [2, 5, 10]:
-        for batch in [2, 5]:
+    for num_ensemble in [10]:
+        for batch in [5]:
             for epochs in [epochs]:
-                for optimizer in ["Adam", "SGD"]:
-                    for activation in ["lrelu", "relu", "tanh"]:
-                        for learning_rate in [1e-3, 5e-5]:
-                            for use_batch_norm in [True, False]:
+                for optimizer in ["Adam"]:
+                    for activation in ["lrelu"]:
+                        for learning_rate in [1e-4]:
+                            for use_batch_norm in [True]:
                                 for prior_scale in [0, 1]:
 
                                     model_suffix = (
@@ -198,13 +198,13 @@ def create_dropout_model_kwargs(epochs):
 
     result = []
 
-    for samples in [1, 10, 100]:
+    for samples in [1, 10]:
         for dropout_probability in [0.05, 0.1, 0.2]:
-            for batch in [2, 20]:
+            for batch in [16]:
                 for epochs in [epochs]:
-                    for optimizer in ["Adam", "SGD"]:
-                        for activation in ["lrelu", "relu", "tanh"]:
-                            for learning_rate in [1e-3, 5e-5]:
+                    for optimizer in ["Adam"]:
+                        for activation in ["lrelu"]:
+                            for learning_rate in [1e-4]:
                                 model_suffix = (
                                     "dp" + str(dropout_probability).replace(".", "") +
                                     "s" + str(samples) +
@@ -235,37 +235,39 @@ def create_bbb_model_kwargs(epochs):
 
     result = []
 
-    for samples in [1, 10, 100]:
+    for samples in [1, 10]:
         for sigma_0 in [1, 2, 10, 100]:
-            for batch in [2, 20]:
+            for batch in [16]:
                 for epochs in [epochs]:
-                    for optimizer in ["Adam", "SGD"]:
-                        for activation in ["lrelu", "relu", "tanh"]:
-                            for learning_rate in [1e-3, 5e-5]:
-                                model_suffix = (
-                                    "sigma" + str(sigma_0).replace(".", "") +
-                                    "s" + str(samples) +
-                                    "b" + str(batch) +
-                                    "lr" + str(learning_rate).replace(".", "") + "-" +
-                                    "o" + str(optimizer) + "-" +
-                                    "a" + str(activation)
-                                )
+                    for optimizer in ["Adam"]:
+                        for activation in ["lrelu"]:
+                            for learning_rate in [1e-4]:
+                                for use_batch_norm in [True]:
+                                    model_suffix = (
+                                        "sigma" + str(sigma_0).replace(".", "") +
+                                        "s" + str(samples) +
+                                        "b" + str(batch) +
+                                        "lr" + str(learning_rate).replace(".", "") + "-" +
+                                        "o" + str(optimizer) + "-" +
+                                        "a" + str(activation)
+                                    )
 
-                                kwargs = {
-                                    "network_type": "bbb",
-                                    "loss": "bbb",
-                                    "model_suffix": model_suffix,
-                                    "epochs": epochs,
-                                    "batch": batch,
-                                    "samples": samples,
-                                    "index_scale": sigma_0,
-                                    "loss_sigma_0": sigma_0,
-                                    "optimizer": optimizer,
-                                    "activation": activation,
-                                    "optimizer_lr": learning_rate,
-                                }
+                                    kwargs = {
+                                        "network_type": "bbb",
+                                        "loss": "bbb",
+                                        "model_suffix": model_suffix,
+                                        "epochs": epochs,
+                                        "batch": batch,
+                                        "samples": samples,
+                                        "index_scale": sigma_0,
+                                        "loss_sigma_0": sigma_0,
+                                        "optimizer": optimizer,
+                                        "activation": activation,
+                                        "optimizer_lr": learning_rate,
+                                        "use_batch_norm": use_batch_norm,
+                                    }
 
-                                result.append(kwargs)
+                                    result.append(kwargs)
 
     return result
 
