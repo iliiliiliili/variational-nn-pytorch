@@ -8,3 +8,4 @@ tools/tex-reports
 models
 screenlog/*
 modeling_errors.txt
+batchjob/
