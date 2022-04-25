@@ -1,0 +1,7 @@
+fire>=0.4
+tqdm>=4.0
+tensorboard>=2.8
+torchattacks>=3.2
+torchvision>=0.12
+scipy>=1.5
+tensorboardX>=2.5

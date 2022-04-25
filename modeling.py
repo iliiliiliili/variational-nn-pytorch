@@ -307,7 +307,7 @@ def create_models(datasets, network_types):
     }
     epochs = {
         "mnist": 5,
-        "cifar10": 10,
+        "cifar10": 100,
     }
 
     all_models = []
