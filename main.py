@@ -789,7 +789,7 @@ def train(
     else:
         full_network_name = ""
 
-    if os.path.exists(model_path) and not allow_retrain:
+    if os.path.exists(model_path) and (not allow_retrain) and (os.path.exists(model_path + "/best/model.pth")):
         print("Already exists", model_path)
         return
 
