@@ -66,7 +66,7 @@ class FunctionalConvolution(FunctionalBase):
         layer = lambda inputs, weights: torch.nn.functional.conv2d(
             inputs,
             weights[0],
-            weights[1],
+            None if weights[1].shape[0] == 0 else weights[1],
             stride=stride,
             **kwargs
         )
@@ -98,7 +98,7 @@ class FunctionalLinear(FunctionalBase):
         layer = lambda inputs, weights: torch.nn.functional.linear(
             inputs,
             weights[0],
-            weights[1],
+            None if weights[1].shape[0] == 0 else weights[1],
             **kwargs
         )
 
@@ -134,7 +134,7 @@ class FunctionalConvolutionTranspose(FunctionalBase):
         body = lambda inputs, weights: torch.nn.functional.conv_transpose2d(
             inputs,
             weights[0],
-            weights[1],
+            None if weights[1].shape[0] == 0 else weights[1],
             stride=stride,
             **kwargs
         )

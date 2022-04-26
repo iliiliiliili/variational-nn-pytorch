@@ -46,6 +46,10 @@ class HypermodelNetwork(Network):
     
     def create_hyperweights(self, device):
         def singe_prior_index(shape, index_scale=0):
+
+            if shape[0] == 0:
+                return torch.empty([], device=device)
+
             result = torch.normal(0, torch.ones(shape, device=device))
 
             if index_scale > 0:
@@ -132,7 +136,7 @@ class HypermodelConvolution(FunctionalConvolution):
         if bias:
             bias_shape = [out_channels]
         else:
-            bias_shape = None
+            bias_shape = [0]
         
         self.parameter_shapes = [weights_shape, bias_shape]
         self.weigths = None
@@ -179,7 +183,7 @@ class HypermodelLinear(FunctionalLinear):
         if bias:
             bias_shape = [out_features]
         else:
-            bias_shape = None
+            bias_shape = [0]
         
         self.parameter_shapes = [weights_shape, bias_shape]
 
@@ -234,7 +238,7 @@ class HypermodelConvolutionTranspose(FunctionalConvolutionTranspose):
         if bias:
             bias_shape = [out_channels]
         else:
-            bias_shape = None
+            bias_shape = [0]
             
         self.parameter_shapes = [weights_shape, bias_shape]
 
@@ -276,7 +280,7 @@ class DiagonalLinearHypertorso(nn.Module):
         # shaped_x = split_by_arrays(x, self.flat_shapes)
         # result = [[w for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
         # result = [[w * x.reshape(w.shape) for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
-        result = [[torch.log(1 + torch.exp(w)) * x.reshape(w.shape) for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
+        result = [[torch.log(1 + torch.exp(w)) * x.reshape(w.shape if w.shape[0] != 0 else x.shape) for x, w in zip(layer_xs, layer_ws)] for layer_xs, layer_ws in zip(shaped_x, self.ws)]
 
         if self.use_bias:
             result = [[h + b for h, b in zip(layer_result, layer_bs)] for layer_result, layer_bs in zip(result, self.bs)]
