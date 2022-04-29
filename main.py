@@ -712,6 +712,9 @@ def process_activation_kwargs(kwargs):
 
     kwargs["activation"] = activation_functions
 
+    if ("activation_mode" in kwargs) and (kwargs["activation_mode"] == "none"):
+        kwargs["activation"] = activations["none"]()
+
     return kwargs
 
 
