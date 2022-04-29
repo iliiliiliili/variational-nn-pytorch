@@ -340,7 +340,7 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4, datasets=["m
             train(network_name=network_name, dataset_name=dataset_name, allow_retrain=False, device="cuda:" + str(device_id), **kwargs)
         except Exception as e:
             print("ERROR:", e)
-            with open("modeling_errors.txt", "w") as f:
+            with open("modeling_errors.txt", "a") as f:
                 description = {
                     "network_name": network_name,
                     "dataset_name": dataset_name,
@@ -348,7 +348,7 @@ def run(network_types="all", id=0, gpu_capacity=4, total_devices=4, datasets=["m
                     "device": "cuda:" + str(device_id),
                     **kwargs
                 }
-                f.write(str(e) + str(network_name) + str(description))
+                f.write(str(e) + " @ " + str(i) + " @ " + str(network_name) + str(description) + "\n")
 
         i += gpu_capacity * total_devices
 
@@ -368,7 +368,7 @@ def run_indexed(network_types="all", index=0, output_dir="./models", datasets=["
         train(network_name=network_name, dataset_name=dataset_name, allow_retrain=False, device="cuda", all_models_path=output_dir, **kwargs)
     except Exception as e:
         print("ERROR:", e)
-        with open(f"{output_dir}/modeling_errors.txt", "w") as f:
+        with open(f"{output_dir}/modeling_errors.txt", "a") as f:
             description = {
                 "network_name": network_name,
                 "dataset_name": dataset_name,
