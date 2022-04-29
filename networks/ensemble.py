@@ -16,7 +16,7 @@ class EnsembleNetwork(Network):
         def output_with_prior(network, prior):
             result = network(x)
             if self.prior_scale > 0:
-                result += prior(x) * self.prior_scale
+                return result + prior(x) * self.prior_scale
 
             return result
 
