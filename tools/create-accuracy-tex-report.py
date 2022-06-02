@@ -58,7 +58,7 @@ for path in model_folders:
                     str(best["result"]),
                 ]
             )
-
+print(f"Found {len(elements)} models")
 elements.sort(key=lambda x: (x[0], x[-1]), reverse=True)
 
 table = [captions]

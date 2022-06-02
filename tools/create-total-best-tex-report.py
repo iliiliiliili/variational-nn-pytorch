@@ -72,6 +72,7 @@ for path in model_folders:
                 ]
             )
 
+print(f"Found {len(elements)} models")
 elements.sort(key=lambda x: (x[0], get_model_group(x[1]), x[-1]), reverse=True)
 
 table = [captions]
