@@ -271,10 +271,52 @@ def create_bbb_model_kwargs(epochs):
     return result
 
 
+def create_hypermodel_model_kwargs(epochs):
+
+    result = []
+
+    for learning_rate in [1e-4, 1e-3]:
+        for samples in [5, 10]:
+            for batch in [2, 10, 20]:
+                for index_scale in [1, 2, 10, 100]:
+                    for index_dim in [10, 5, 1]:
+                        for epochs in [epochs]:
+                            for optimizer in ["Adam"]:
+                                for activation in ["lrelu"]:
+                                    for use_batch_norm in [True]:
+                                        model_suffix = (
+                                            "s" + str(samples) +
+                                            "b" + str(batch) +
+                                            "is" + str(index_scale) +
+                                            "id" + str(index_dim) +
+                                            "lr" + str(learning_rate).replace(".", "") + "-" +
+                                            "o" + str(optimizer) + "-" +
+                                            "a" + str(activation)
+                                        )
+
+                                        kwargs = {
+                                            "network_type": "hypermodel",
+                                            "model_suffix": model_suffix,
+                                            "index_dim": index_dim,
+                                            "epochs": epochs,
+                                            "batch": batch,
+                                            "samples": samples,
+                                            "index_scale": index_scale,
+                                            "optimizer": optimizer,
+                                            "activation": activation,
+                                            "optimizer_lr": learning_rate,
+                                            "use_batch_norm": use_batch_norm,
+                                        }
+
+                                        result.append(kwargs)
+
+    return result
+
+
 def create_models(datasets, network_types):
 
     if network_types is None or network_types == "all":
-        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb"]
+        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb", "hypermodel"]
 
     kwarg_creators = {
         "vnn": create_reduced_vnn_model_kwargs,
@@ -282,6 +324,7 @@ def create_models(datasets, network_types):
         "ensemble": create_ensemble_model_kwargs,
         "dropout": create_dropout_model_kwargs,
         "bbb": create_bbb_model_kwargs,
+        "hypermodel": create_hypermodel_model_kwargs,
     }
 
     networks = {

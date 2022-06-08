@@ -63,7 +63,7 @@ class HypermodelNetwork(Network):
         if self.shape_index:
             index = [[singe_prior_index(x, self.index_scale) for x in sub_shapes] for sub_shapes in self.shapes]
         else:
-            index = singe_prior_index(self.index_dim)
+            index = singe_prior_index([self.index_dim])
 
         weights = self.hypertorso(index)
 
