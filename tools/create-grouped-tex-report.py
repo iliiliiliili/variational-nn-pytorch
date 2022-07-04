@@ -2,6 +2,27 @@ import sys
 import os
 import json
 
+from plotnine import (
+    ggplot,
+    aes,
+    geom_line,
+    geom_point,
+    facet_grid,
+    facet_wrap,
+    scale_y_continuous,
+    geom_hline,
+    position_dodge,
+    geom_errorbar,
+    theme,
+    element_text,
+)
+from plotnine.data import economics
+from pandas import Categorical, DataFrame
+from plotnine.scales.limits import ylim
+from plotnine.scales.scale_xy import scale_x_discrete
+from glob import glob
+import re
+
 
 models_root = "./models" if len(sys.argv) < 2 else sys.argv[1]
 model_folders = [str(f.path) for f in os.scandir(models_root) if f.is_dir()]
@@ -189,6 +210,8 @@ elements_in_a_group = 0
 
 for element in elements:
 
+    print(element)
+
     if element[0] != last_dataset:
         table.append("\\hline\\hline")
         last_dataset = element[0]
@@ -211,3 +234,54 @@ template = template.replace("<TABLE>", table)
 
 with open(output_file, "w") as f:
     f.write(template)
+
+def plot(elements, output_file_name, exclude_methods=["classic"]):
+
+    frame = {
+        "Dataset": [],
+        "Architecture": [],
+        "Method": [],
+        "Accuracy": [],
+    }
+
+    architecture_to_name = {
+        "resnet 18": "Resnet 18",
+        "mini2 base": "Micro Base",
+        "mini base": "Mini Base",
+        "base": "Base",
+        "mlp": "MLP",
+    }
+
+    dataset_to_name = {
+        "cifar10 n2": "CIFAR-10",
+        "mnist": "MNIST",
+    }
+
+    for element in elements:
+        if element[2] not in exclude_methods:
+            frame["Dataset"].append(dataset_to_name[element[0]])
+            frame["Architecture"].append(architecture_to_name[element[1]])
+            frame["Method"].append(element[2])
+            frame["Accuracy"].append(float(element[-1]))
+
+    frame["Method"] = Categorical(frame["Method"], ["bbb", "dropout", "vnn", "ensemble", "hypermodel"])
+    frame["Dataset"] = Categorical(frame["Dataset"], ["MNIST", "CIFAR-10"])
+    frame = DataFrame(frame)
+
+    plot = (
+        ggplot(frame)
+        + aes(x="Accuracy", y="Method")
+        + facet_wrap(["Dataset", "Architecture"], nrow=2, labeller="label_both")
+        + geom_point(
+            # aes(),
+            # size=3,
+            # position=position_dodge(width=0.8),
+            # stroke=0.2,
+        )
+    )
+
+    # plot = plot + theme(strip_text_x=element_text(size=5))
+
+    plot.save(output_file_name + ".png", dpi=600)
+
+plot(elements, output_file)
