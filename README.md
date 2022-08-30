@@ -7,7 +7,7 @@ Bayesian Neural Networks (BNNs) provide a tool to estimate the uncertainty of a 
 If you use this work for your research, you can cite it as:
 ```
 @article{oleksiienko2022vnn,
-  author={Oleksiienko, Illia, Thanh Tran, Dat, and Iosifidis, Alexandros},
+  author = {Oleksiienko, Illia and Tran, Dat Thanh and Iosifidis, Alexandros},
   journal={arxiv:2207.01524}, 
   title={Variational Neural Networks}, 
   year={2022},
