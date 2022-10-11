@@ -7,6 +7,7 @@ from networks.const_mean_variational import (
 )
 from networks.ensemble import create_ensemble
 from networks.hypermodel import HypermodelConvolution, HypermodelLinear, create_bbb_hypermodel, create_hypermodel, create_linear_hypermodel
+from networks.layer_ensemble import simple_mnist_layer_ensemble
 from networks.single_mean_variational import (
     SingleMeanVariationalConvolution,
     SingleMeanVariationalLinear,
@@ -313,6 +314,8 @@ def create_network(network_name, network_type):
             return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "hypermodel"), *args, **kwargs)
         elif network_type == "ensemble_ensemble":
             return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "ensemble"), *args, **kwargs)
+        elif network_type == "layer_ensemble":
+            return lambda *args, **kwargs: simple_mnist_layer_ensemble(*args, **kwargs)
 
     creators = {
         "mnist_base": createMnistBase,
