@@ -10,6 +10,17 @@ Use `run_example.sh` to train and evaluate a single model on MNIST.
 ## Citation
 
 If you use this work for your research, you can cite it as:
+### Library:
+```
+@article{oleksiienko2022vnntorchjax,
+    title = {Variational Neural Networks implementation in Pytorch and JAX},
+    journal = {Software Impacts},
+    volume = {14},
+    pages = {100431},
+    year = {2022},
+}
+```
+### Paper:
 ```
 @article{oleksiienko2022vnn,
   author = {Oleksiienko, Illia and Tran, Dat Thanh and Iosifidis, Alexandros},
