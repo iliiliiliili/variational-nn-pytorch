@@ -3,13 +3,13 @@ from networks.network import Network
 from core import Flatten
 
 
-def createMnistBase(Convolution, Linear):
+def createMnistBase(Convolution, Linear, Sequential=nn.Sequential):
     class MnistBase(Network):
         def __init__(self, **kwargs) -> None:
 
             super().__init__()
 
-            self.model = nn.Sequential(
+            self.model = Sequential(
                 Convolution(1, 256, 9, 1, **kwargs),
                 Convolution(256, 256, 9, 2, **kwargs),
                 Convolution(256, 16, 4, 1, **kwargs),

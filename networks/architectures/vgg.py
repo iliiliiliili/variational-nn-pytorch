@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 
-def createVGG(Convolution, Linear):
+def createVGG(Convolution, Linear, Sequential=nn.Sequential):
     class VGG(Network):
         def __init__(
             self, features, num_classes=10, init_weights=True, **kwargs
@@ -11,7 +11,7 @@ def createVGG(Convolution, Linear):
             super(VGG, self).__init__()
             self.features = features
             self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-            self.classifier = nn.Sequential(
+            self.classifier = Sequential(
                 Linear(512 * 7 * 7, 512, **kwargs),
                 Linear(512, 512, **kwargs),
                 Linear(512, 10, **kwargs),
@@ -35,7 +35,7 @@ def createVGG(Convolution, Linear):
                 )
                 layers += [conv2d]
                 in_channels = v
-        return nn.Sequential(*layers)
+        return Sequential(*layers)
 
     cfgs = {
         "A": [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],

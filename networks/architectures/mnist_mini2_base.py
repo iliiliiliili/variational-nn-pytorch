@@ -3,14 +3,14 @@ import torch
 from networks.network import Network
 
 
-def createMnistMini2Base(Convolution, Linear):
+def createMnistMini2Base(Convolution, Linear, Sequential=nn.Sequential):
     class MnistMini2Base(Network):
 
         def __init__(self, **kwargs) -> None:
 
             super().__init__()
 
-            self.model = nn.Sequential(
+            self.model = Sequential(
                 Convolution(1, 8, 9, 1, **kwargs),
                 Convolution(8, 16, 9, 2, **kwargs),
                 Convolution(16, 4, 4, 1, **kwargs),

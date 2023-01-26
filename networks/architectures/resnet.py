@@ -3,7 +3,7 @@ from networks.network import Network
 import torch.nn.functional as F
 
 
-def createResnet(Convolution, Linear):
+def createResnet(Convolution, Linear, Sequential=nn.Sequential):
     class BasicBlock(nn.Module):
         expansion = 1
 
@@ -11,7 +11,7 @@ def createResnet(Convolution, Linear):
 
             super().__init__()
 
-            self.block = nn.Sequential(
+            self.block = Sequential(
                 Convolution(
                     in_channels,
                     out_channels,
@@ -32,9 +32,9 @@ def createResnet(Convolution, Linear):
                 ),
             )
 
-            self.shortcut = nn.Sequential()
+            self.shortcut = Sequential()
             if stride != 1 or in_channels != self.expansion * out_channels:
-                self.shortcut = nn.Sequential(
+                self.shortcut = Sequential(
                     Convolution(
                         in_channels,
                         self.expansion * out_channels,
@@ -57,7 +57,7 @@ def createResnet(Convolution, Linear):
 
             super().__init__()
 
-            self.block = nn.Sequential(
+            self.block = Sequential(
                 Convolution(
                     in_channels,
                     out_channels,
@@ -83,9 +83,9 @@ def createResnet(Convolution, Linear):
                 ),
             )
 
-            self.shortcut = nn.Sequential()
+            self.shortcut = Sequential()
             if stride != 1 or in_channels != self.expansion * out_channels:
-                self.shortcut = nn.Sequential(
+                self.shortcut = Sequential(
                     Convolution(
                         in_channels,
                         self.expansion * out_channels,
@@ -143,7 +143,7 @@ def createResnet(Convolution, Linear):
                     block(self.in_channels, out_channels, stride, **kwargs)
                 )
                 self.in_channels = out_channels * block.expansion
-            return nn.Sequential(*layers)
+            return Sequential(*layers)
 
         def forward(self, x):
             out = self.conv1(x)

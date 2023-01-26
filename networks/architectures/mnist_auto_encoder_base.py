@@ -13,7 +13,7 @@ class Reshape(nn.Module):
         return x.view(self.shape)
 
 
-def createMnistAutoEncoderBase(Convolution, Linear):
+def createMnistAutoEncoderBase(Convolution, Linear, Sequential=nn.Sequential):
     class MnistAutoEncoderBase(AutoEncoderNetwork):
         def __init__(self, input_size=(28, 28), **kwargs) -> None:
 
@@ -23,13 +23,13 @@ def createMnistAutoEncoderBase(Convolution, Linear):
             for a in input_size:
                 total_input_size *= a
 
-            encoder = nn.Sequential(
+            encoder = Sequential(
                 torch.nn.Flatten(start_dim=1),  # type: ignore
                 Linear(total_input_size, 400, **kwargs),
                 Linear(400, 20, **kwargs),
             )
 
-            decoder = nn.Sequential(
+            decoder = Sequential(
                 Linear(20, 400, **kwargs),
                 Linear(
                     400,

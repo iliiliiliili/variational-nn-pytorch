@@ -3,14 +3,14 @@ import torch
 from networks.network import Network
 
 
-def createMnistMlp(Convolution, Linear):
+def createMnistMlp(Convolution, Linear, Sequential=nn.Sequential):
     class MnistMlp(Network):
 
         def __init__(self, **kwargs) -> None:
 
             super().__init__()
 
-            self.model = nn.Sequential(
+            self.model = Sequential(
                 torch.nn.Flatten(start_dim=1),  # type: ignore
                 Linear(28 * 28, 50, **kwargs),
                 Linear(50, 50, **kwargs),

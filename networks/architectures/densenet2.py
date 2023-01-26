@@ -5,7 +5,7 @@ from networks.network import Network
 import torch.nn.functional as F
 
 
-def createDenseNet2(Convolution, Linear):
+def createDenseNet2(Convolution, Linear, Sequential=nn.Sequential):
     class Bottleneck(nn.Module):
         def __init__(self, in_planes, growth_rate, **kwargs):
             super(Bottleneck, self).__init__()
@@ -102,7 +102,7 @@ def createDenseNet2(Convolution, Linear):
             for i in range(nblock):
                 layers.append(block(in_planes, self.growth_rate, **kwargs))
                 in_planes += self.growth_rate
-            return nn.Sequential(*layers)
+            return Sequential(*layers)
 
         def forward(self, x):
             out = self.conv1(x)

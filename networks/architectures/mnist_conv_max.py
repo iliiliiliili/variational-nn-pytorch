@@ -3,14 +3,14 @@ import torch
 from networks.network import Network
 
 
-def createMnistConvMax(Convolution, Linear):
+def createMnistConvMax(Convolution, Linear, Sequential=nn.Sequential):
     class MnistConvMax(Network):
 
         def __init__(self, **kwargs) -> None:
 
             super().__init__()
 
-            self.model = nn.Sequential(
+            self.model = Sequential(
                 Convolution(1, 10, 5, 1, **kwargs),
                 nn.MaxPool2d(2),
                 Convolution(10, 20, 5, 1, **kwargs),

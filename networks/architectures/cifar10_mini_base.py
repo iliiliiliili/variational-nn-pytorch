@@ -3,14 +3,14 @@ import torch
 from networks.network import Network
 
 
-def createCifar10MiniBase(Convolution, Linear):
+def createCifar10MiniBase(Convolution, Linear, Sequential=nn.Sequential):
     class Cifar10MiniBase(Network):
 
         def __init__(self, **kwargs) -> None:
 
             super().__init__()
 
-            self.model = nn.Sequential(
+            self.model = Sequential(
                 Convolution(3, 8, 3, 1, **kwargs),
                 Convolution(8, 8, 3, 2, **kwargs),
                 Convolution(8, 16, 3, 1, **kwargs),
