@@ -193,6 +193,50 @@ def create_ensemble_model_kwargs(epochs):
     return result
 
 
+
+def create_layer_ensemble_model_kwargs(epochs):
+
+    result = []
+
+    for num_ensemble in [2,3,4]:
+        for batch in [5]:
+            for epochs in [epochs]:
+                for optimizer in ["Adam"]:
+                    for activation in ["lrelu"]:
+                        for learning_rate in [1e-4]:
+                            for use_batch_norm in [True]:
+                                for prior_scale in [0, 1]:
+
+                                    model_suffix = (
+                                        "s" + str(num_ensemble) +
+                                        "b" + str(batch) +
+                                        "lr" + str(learning_rate).replace(".", "") + "-" +
+                                        "o" + str(optimizer) + "-" +
+                                        "a" + str(activation) +
+                                        "ps" + str(prior_scale) +
+                                        ("-bn" if use_batch_norm else "")
+                                    )
+
+                                    kwargs = {
+                                        "network_type": "layer_ensemble",
+                                        "model_suffix": model_suffix,
+                                        "epochs": epochs,
+                                        "batch": batch,
+                                        "samples": 1,
+                                        "num_ensemble": num_ensemble,
+                                        "optimizer": optimizer,
+                                        "activation": activation,
+                                        "use_batch_norm": use_batch_norm,
+                                        "optimizer_lr": learning_rate,
+                                        "prior_scale": prior_scale,
+                                    }
+
+                                    result.append(kwargs)
+
+    return result
+
+
+
 def create_dropout_model_kwargs(epochs):
 
     result = []
@@ -316,12 +360,13 @@ def create_hypermodel_model_kwargs(epochs):
 def create_models(datasets, network_types):
 
     if network_types is None or network_types == "all":
-        network_types = ["vnn", "classic", "ensemble", "dropout", "bbb", "hypermodel"]
+        network_types = ["vnn", "classic", "ensemble", "layer_ensemble", "dropout", "bbb", "hypermodel"]
 
     kwarg_creators = {
         "vnn": create_reduced_vnn_model_kwargs,
         "classic": create_classic_model_kwargs,
         "ensemble": create_ensemble_model_kwargs,
+        "layer_ensemble": create_layer_ensemble_model_kwargs,
         "dropout": create_dropout_model_kwargs,
         "bbb": create_bbb_model_kwargs,
         "hypermodel": create_hypermodel_model_kwargs,

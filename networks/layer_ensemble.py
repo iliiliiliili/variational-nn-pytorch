@@ -10,8 +10,11 @@ from networks.network import Network
 
 class LayerEnsembleBase(nn.Module):
 
+    __COLLECTION = []
+
     def __init__(self) -> None:
         super().__init__()
+        LayerEnsembleBase.__COLLECTION.append(self)
 
     def build(
         self,
@@ -44,17 +47,26 @@ class LayerEnsembleBase(nn.Module):
         if activation is not None:
             self.suffix = nn.Sequential(self.suffix, activation)
 
-    def forward(self, input):
+    def forward(self, input, sample=None):
 
-        if self.sample is None:
+        if sample is None:
+            sample = self.sample
+
+        if sample is None:
             raise Exception("No sample provided")
 
-        result = self.ensembles[self.sample](input)
+        result = self.ensembles[sample](input)
         result = self.suffix(result)
 
         self.sample = None
         return result
 
+    @staticmethod
+    def collect():
+        result = LayerEnsembleBase.__COLLECTION
+        LayerEnsembleBase.__COLLECTION = []
+
+        return result
 
 class LayerEnsembleConvolution(LayerEnsembleBase):
     def __init__(
@@ -174,28 +186,49 @@ class LayerEnsembleNetwork(Network):
     def __init__(self, network_creator, prior_scale, **kwargs) -> None:
         super().__init__()
         self.prior_scale = prior_scale
-        self.network = network_creator(**kwargs)
-        self.prior = network_creator(**kwargs)
 
-    def forward(self, x):
-        samples = self.sampler()
-        result = self.batched(x, samples)
+        empty = LayerEnsembleBase.collect()
+        assert len(empty) == 0
+
+        self.network = network_creator(**kwargs)
+        self.network_collection = LayerEnsembleBase.collect()
+
+        self.prior = network_creator(**kwargs)
+        self.prior.requires_grad_(False)
+        self.prior_collection = LayerEnsembleBase.collect()
+
+        self.num_ensembles = [a.num_ensemble for a in self.network_collection]
+
+    def forward(self, x, samples=10):
+        sampled_models = self.sampler(samples)
+        result = self.batched(x, sampled_models)
+
+        return result
 
     def batched(self, x, samples):
 
         def output_with_prior(network, prior, sample):
+            self.select_sample(self.network_collection, sample)
             result = network(x)
             if self.prior_scale > 0:
+                self.select_sample(self.prior_collection, sample)
                 return result + prior(x) * self.prior_scale
 
             return result
 
         result = torch.mean(torch.stack([output_with_prior(self.network, self.prior, sample) for sample in samples]), dim=0)
         return result
-    
-    def sampler(self):
 
-        shapes = [a.parameter_shapes for a in self.network.modules() if hasattr(a, "parameter_shapes")]
+    def select_sample(self, collection, sample):
+        assert len(sample) == len(self.num_ensembles)
+
+        for i, layer in enumerate(collection):
+            layer_sample = sample[i]
+            assert layer_sample < layer.num_ensemble
+
+            layer.sample = layer_sample
+
+    def sampler(self, num_samples=None):
 
         def create_all_samples(i, num_ensembles, prefix):
             result = []
@@ -211,26 +244,31 @@ class LayerEnsembleNetwork(Network):
 
         all_samples = np.array(create_all_samples(0, self.num_ensembles, []))
 
-        indices = np.random.choice(len(all_samples), num_samples, replace=False)
-        results = all_samples[indices]
-        lex_results = [results[:, results.shape[-1] - 1 - i] for i in range(results.shape[-1])]
-        sorted_results = results[np.lexsort(lex_results)]
+        if num_samples is None:
+            sorted_results = all_samples
+        else:
+            indices = np.random.choice(len(all_samples), num_samples, replace=False)
+            results = all_samples[indices]
+
+            lex_results = [results[:, results.shape[-1] - 1 - i] for i in range(results.shape[-1])]
+            sorted_results = results[np.lexsort(lex_results)]
 
         return sorted_results
 
 
-def create_layer_ensemble(network_creator, num_ensemble=10, prior_scale=1, **kwargs):
-    networks = [network_creator(**kwargs) for _ in range(num_ensemble)]
-    if prior_scale > 0: 
-        priors = [network_creator(**kwargs) for _ in range(num_ensemble)]
-        [p.requires_grad_(False) for p in priors]
-    else:
-        priors = [nn.Identity() for _ in range(num_ensemble)]
+def create_layer_ensemble_network(network_creator, num_ensemble=2, prior_scale=1, **kwargs):
 
-    result = LayerEnsembleNetwork(networks, priors, prior_scale)
+    creator = network_creator(
+        specific_lens_layer(num_ensemble, LayerEnsembleConvolution),
+        specific_lens_layer(num_ensemble, LayerEnsembleLinear)
+    )
+    result = LayerEnsembleNetwork(creator, prior_scale, **kwargs)
 
     return result
 
+
+def specific_lens_layer(num_ensemble, Layer: LayerEnsembleBase):
+    return lambda *args, **kwargs: Layer(num_ensemble, *args, **kwargs)
 
 class SimpleLayerEnsembleNetwork(Network):
     def __init__(self, num_ensemble, optimized, **kwargs) -> None:
@@ -250,7 +288,7 @@ class SimpleLayerEnsembleNetwork(Network):
                 **kwargs
             ),
         ])
-        
+
         self.num_ensembles = num_ensembles
         self.layers = layers
         self.optimized = optimized

@@ -30,6 +30,7 @@ from networks.variational import (
 )
 from networks.classic import ClassicConvolution, ClassicLinear
 from networks.dropout import DropoutConvolution, DropoutLinear
+from networks.layer_ensemble import create_layer_ensemble_network
 import torch
 from torchvision import datasets
 from torchvision import transforms
@@ -315,7 +316,7 @@ def create_network(network_name, network_type):
         elif network_type == "ensemble_ensemble":
             return lambda *args, **kwargs: create_ensemble(model_generator(network_creator, "ensemble"), *args, **kwargs)
         elif network_type == "layer_ensemble":
-            return lambda *args, **kwargs: simple_mnist_layer_ensemble(*args, **kwargs)
+            return lambda *args, **kwargs: create_layer_ensemble_network(network_creator, *args, **kwargs)
 
     creators = {
         "mnist_base": createMnistBase,
