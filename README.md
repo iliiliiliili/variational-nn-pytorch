@@ -7,6 +7,7 @@ Bayesian Neural Networks (BNNs) provide a tool to estimate the uncertainty of a 
 ## Run
 
 Use `run_example.sh` to train and evaluate a single model on MNIST.
+The corresponding reproducible capsule is available at [CodeOcean](https://codeocean.com/capsule/9585164/tree).
 ## Citation
 
 If you use this work for your research, you can cite it as:
