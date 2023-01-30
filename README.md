@@ -24,7 +24,7 @@ If you use this work for your research, you can cite it as:
 ```
 ### Paper:
 ```
-@article{oleksiienko2022vnn,
+@article{oleksiienko2023vnn,
   title={Variational Neural Networks}, 
   author = {Oleksiienko, Illia and Tran, Dat Thanh and Iosifidis, Alexandros},
   journal={arxiv:2207.01524}, 
