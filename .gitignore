@@ -9,3 +9,4 @@ models
 screenlog/*
 modeling_errors.txt
 batchjob/
+dist
