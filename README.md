@@ -91,6 +91,7 @@ def create_based(Convolution, Linear):
         def forward(self, x):
 
             return self.model(x)
+    return Based
 
 based_vnn = create_based(VariationalConvolution, VariationalLinear)
 based_classic = create_based(ClassicConvolution, ClassicLinear)
