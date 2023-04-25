@@ -4,11 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vnn"
-version = "0.1.1"
+version = "0.2.0"
 authors = [
-  {name="Illia Oleksiienko", email="io@ece.au.dk"},
-  {name="Dat Thanh Tran", email="viebboy@gmail.com"},
-  {name="Alexandros Iosifidis", email="ai@ece.au.dk"},
+  {name="Illia Oleksiienko, Dat Thanh Tran, Alexandros Iosifidis", email="io@ece.au.dk"},
 ]
 description = "Variational Neural Networks"
 readme = "README.md"
