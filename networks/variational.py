@@ -4,9 +4,9 @@ from torch import nn
 
 
 class VariationalBase(nn.Module):
-
     GLOBAL_STD: float = 0
     LOG_STDS = False
+    INIT_WEIGHTS = "usual"
 
     def __init__(self) -> None:
         super().__init__()
@@ -43,7 +43,6 @@ class VariationalBase(nn.Module):
             Literal["none"], Literal["replace"], Literal["multiply"]
         ] = "none",
     ) -> None:
-
         super().__init__()
 
         self.end_activation = None
@@ -55,11 +54,9 @@ class VariationalBase(nn.Module):
         self.global_std_mode = global_std_mode
 
         if use_batch_norm:
-
             batch_norm_targets = batch_norm_mode.split("+")
 
             for i, target in enumerate(batch_norm_targets):
-
                 if target == "mean":
                     self.means = nn.Sequential(
                         self.means,
@@ -89,11 +86,9 @@ class VariationalBase(nn.Module):
                     raise ValueError("Unknown batch norm target: " + target)
 
         if activation is not None:
-
             activation_targets = activation_mode.split("+")
 
             for i, target in enumerate(activation_targets):
-
                 if len(activation_targets) == 1:
                     current_activation: nn.Module = activation  # type: ignore
                 else:
@@ -102,25 +97,24 @@ class VariationalBase(nn.Module):
                     ]  # type: ignore
 
                 if target == "mean":
-                    self.means = nn.Sequential(self.means, current_activation,)
+                    self.means = nn.Sequential(
+                        self.means,
+                        current_activation,
+                    )
                 elif target == "std":
                     if self.stds is not None:
                         self.stds = nn.Sequential(
-                            self.stds, current_activation,
+                            self.stds,
+                            current_activation,
                         )
                 elif target == "end":
                     self.end_activation = current_activation
                 else:
                     raise ValueError("Unknown activation target: " + target)
 
-    def forward(self, input):
+        self._init_weights()
 
-        if isinstance(input, tuple):
-            x, nstd_x = input
-        else:
-            x = input
-            nstd_x = x
-
+    def forward(self, x):
         means = self.means(x)
 
         if self.stds:
@@ -134,7 +128,6 @@ class VariationalBase(nn.Module):
             stds = VariationalBase.GLOBAL_STD * stds
 
         if self.LOG_STDS:
-
             pstds = stds
 
             if isinstance(stds, (int, float)):
@@ -153,11 +146,6 @@ class VariationalBase(nn.Module):
                 float(torch.mean(means).detach()),
             )
 
-        # if self.is_uncertainty_layer:
-        #     result = means
-        # else:
-        #     result = torch.distributions.Normal(means, stds).rsample()
-        # result = torch.distributions.Normal(means, stds.abs() + 1e-40).rsample()
         result = means + stds * torch.normal(0, torch.ones_like(means))
 
         if self.end_batch_norm is not None:
@@ -167,6 +155,9 @@ class VariationalBase(nn.Module):
             result = self.end_activation(result)
 
         return result
+
+    def _init_weights(self):
+        init_weights(self)
 
 
 class VariationalConvolution(VariationalBase):
@@ -204,7 +195,6 @@ class VariationalConvolution(VariationalBase):
         bias=True,
         **kwargs,
     ) -> None:
-
         super().__init__()
 
         if use_batch_norm:
@@ -279,7 +269,6 @@ class VariationalLinear(VariationalBase):
         bias=True,
         **kwargs,
     ) -> None:
-
         super().__init__()
 
         if use_batch_norm:
@@ -342,7 +331,6 @@ class VariationalConvolutionTranspose(VariationalBase):
         bias=True,
         **kwargs,
     ) -> None:
-
         super().__init__()
 
         if use_batch_norm:
@@ -382,3 +370,57 @@ class VariationalConvolutionTranspose(VariationalBase):
             batch_norm_momentum=batch_norm_momentum,
             global_std_mode=global_std_mode,
         )
+
+
+def init_weights(self):
+    init_type, *params = VariationalBase.INIT_WEIGHTS.split(":")
+
+    if init_type == "usual":
+        pass
+    elif init_type == "fill":
+        fill_what = params[0]
+        value_kernel = float(params[1])
+        value_bias = float(params[2])
+
+        def fill(target):
+            target.weight.data.fill_(value_kernel)
+            if target.bias:
+                target.bias.data.fill_(value_bias)
+
+        if "mean" in fill_what:
+            fill(self.means)
+
+        if "std" in fill_what:
+            fill(self.stds)
+    elif init_type == "xavier_uniform":
+        fill_what = params[0]
+        gain_kernel = float(params[1])
+        gain_bias = float(params[2])
+
+        def fill(target):
+            torch.nn.init.xavier_uniform_(target.weight, gain=gain_kernel)
+            if target.bias:
+                torch.nn.init.xavier_uniform_(target.bias, gain=gain_bias)
+
+        if "mean" in fill_what:
+            fill(self.means)
+
+        if "std" in fill_what:
+            fill(self.stds)
+    elif init_type == "xavier_normal":
+        fill_what = params[0]
+        gain_kernel = float(params[1])
+        gain_bias = float(params[2])
+
+        def fill(target):
+            torch.nn.init.xavier_normal_(target.weight, gain=gain_kernel)
+            if target.bias:
+                torch.nn.init.xavier_normal_(target.bias, gain=gain_bias)
+
+        if "mean" in fill_what:
+            fill(self.means)
+
+        if "std" in fill_what:
+            fill(self.stds)
+    else:
+        raise ValueError()
