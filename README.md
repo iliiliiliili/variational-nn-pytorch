@@ -1,6 +1,6 @@
 # Variational Neural Networks Pytorch
 
-This repository contains a Pytorch implementation of Variational Neural Networks (VNNs) and image classification experiments for [Variational Neural Networks paper](https://arxiv.org/abs/2207.01524).
+This repository contains a Pytorch implementation of Variational Neural Networks (VNNs) and image classification experiments for [Variational Neural Networks paper](https://arxiv.org/abs/2207.01524) presented in IJCNN 2023 (citation for the published paper is presented below).
 
 The corresponding package contains layer implementations for VNNs and other used architectures. It can be installed using `pip install vnn`.
 
@@ -117,9 +117,11 @@ If you use this work for your research, you can cite it as:
 ### Paper:
 ```
 @article{oleksiienko2023vnn,
-  title={Variational Neural Networks}, 
-  author = {Oleksiienko, Illia and Tran, Dat Thanh and Iosifidis, Alexandros},
-  journal={arxiv:2207.01524}, 
-  year={2023},
+    title={Variational Neural Networks}, 
+    author = {Oleksiienko, Illia and Tran, Dat Thanh and Iosifidis, Alexandros},
+    journal = {Procedia Computer Science},
+    volume = {222C},
+    pages = {104-113},
+    year = {2023},
 }
 ```
